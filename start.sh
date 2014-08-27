@@ -1,16 +1,17 @@
 #!/bin/bash
-USER_ID=`ls -lahn /mapproxy | tail -1 | awk {'print $3'}`
-GROUP_ID=`ls -lahn /mapproxy | tail -1 | awk {'print $4'}`
-USER_NAME=`ls -lah /mapproxy | tail -1 | awk '{print $3}'`
+USER_ID=`ls -lahn / | grep mapproxy | awk '{print $3}'`
+GROUP_ID=`ls -lahn / | grep mapproxy | awk '{print $4}'`
+USER_NAME=`ls -lah / | grep mapproxy | awk '{print $3}'`
 
 groupadd -g $GROUP_ID mapproxy
 useradd --shell /bin/bash --uid $USER_ID --gid $GROUP_ID $USER_NAME
-su $USER_NAME
 
 # Create a default mapproxy config is one does not exist in /mapproxy
 if [ ! -f /mapproxy/mapproxy.yaml ]
 then
-  /venv/bin/mapproxy-util create -t base-config mapproxy
+  su $USER_NAME -c "/venv/bin/mapproxy-util create -t base-config mapproxy"
 fi
 cd /mapproxy
-/venv/bin/mapproxy-util serve-develop mapproxy.yaml
+/venv/bin/mapproxy-util create -t wsgi-app -f mapproxy.yaml /uwsgi_config.py
+/venv/bin/uwsgi --ini /uwsgi_config.py
+#su $USER_NAME -c "/venv/bin/mapproxy-util serve-develop -b 0.0.0.0:8080 mapproxy.yaml"
