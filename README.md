@@ -16,7 +16,7 @@ docker build -t kartoza/docker-mapproxy \
 To run a container do:
 
 ```
-docker run --name "mapproxy" -p 1234:80 -d -t \
+docker run --name "mapproxy" -p 1234:8080 -d -t \
      kartoza/docker-mapproxy
 ```
 
@@ -25,7 +25,7 @@ able to edit the configs:
 
 
 ```
-docker run --name "mapproxy" -p 1234:80 -d -t -v \
+docker run --name "mapproxy" -p 1234:8080 -d -t -v \
    `pwd`/mapproxy:/mapproxy kartoza/docker-mapproxy
 ```
 
