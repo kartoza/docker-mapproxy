@@ -1,1 +1,1 @@
-docker build -t kartoza/mapproxy:latest .
+docker build -t kartoza/mapproxy .
