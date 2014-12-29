@@ -26,7 +26,7 @@ RUN apt-get install -y \
     python-virtualenv
 RUN pip install Shapely Pillow MapProxy uwsgi
 
-EXPOSE 80
+EXPOSE 8080
 
 ADD uwsgi.conf /uwsgi.conf
 ADD start.sh /start.sh
