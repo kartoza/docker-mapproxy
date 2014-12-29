@@ -1,9 +1,6 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM debian:stable
+FROM python:2.7
 MAINTAINER Tim Sutton<tim@kartoza.com>
-RUN  export DEBIAN_FRONTEND=noninteractive
-ENV  DEBIAN_FRONTEND noninteractive
-RUN  dpkg-divert --local --rename --add /sbin/initctl
 
 # Use local cached debs from host (saves your bandwidth!)
 # Change ip below to that of your apt-cacher-ng host
@@ -14,8 +11,20 @@ RUN apt-get -y update
 
 #-------------Application Specific Stuff ----------------------------------------------------
 
-RUN apt-get install -y python-imaging python-yaml libproj0 libgeos-dev python-lxml libgdal-dev build-essential python-dev libjpeg-dev zlib1g-dev libfreetype6-dev python-virtualenv
-RUN virtualenv /venv; /venv/bin/pip install Shapely Pillow MapProxy uwsgi
+RUN apt-get install -y \
+    python-imaging \
+    python-yaml \
+    libproj0 \
+    libgeos-dev \
+    python-lxml \
+    libgdal-dev \
+    build-essential \
+    python-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    python-virtualenv
+RUN pip install Shapely Pillow MapProxy uwsgi
 
 EXPOSE 80
 
