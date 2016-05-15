@@ -1,6 +1,6 @@
 # Mapproxy Dockerfile
 
-This will build a [docker](http://www.docker/) image that runs [mapproxy
+This will build a [docker](http://www.docker.com/) image that runs [mapproxy
 ](http://mapproxy.org).
 
 ## Getting the image
@@ -44,7 +44,7 @@ To run a mapproxy container do:
 
 ```
 docker run --name "mapproxy" -p 8080:8080 -d -t \
-     kartoza/docker-mapproxy
+     kartoza/mapproxy
 ```
 
 Typically you will want to mount the mapproxy volume, otherwise you won't be
@@ -53,7 +53,7 @@ able to edit the configs:
 ```
 mkdir mapproxy
 docker run --name "mapproxy" -p 8080:8080 -d -t -v \
-   `pwd`/mapproxy:/mapproxy kartoza/docker-mapproxy
+   `pwd`/mapproxy:/mapproxy kartoza/mapproxy
 ```
 
 The first time your run the container, mapproxy basic default configuration
