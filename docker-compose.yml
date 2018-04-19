@@ -1,0 +1,29 @@
+version: '2.1'
+services:
+
+
+  qgis-server:
+    image: kartoza/qgis-server:2.18.17
+    ports:
+      - "8081:80"
+    environment:
+      - QGIS_PROJECT_FILE=
+    volumes:
+      - ./data:/web
+      - ${HOME}:/home/${USER}
+
+
+  mapproxy:
+    image: kartoza/mapproxy
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./mapproxy:/mapproxy
+    links:
+      - qgis-server:qgis-server
+
+
+
+
+
+
