@@ -10,15 +10,13 @@ services:
       - QGIS_PROJECT_FILE=
     volumes:
       - ./data:/web
-      - ${HOME}:/home/${USER}
-
 
   mapproxy:
     image: kartoza/mapproxy
     ports:
       - "8082:8080"
     volumes:
-      - ./mapproxy:/mapproxy
+      - ./configuration:/mapproxy
     links:
       - qgis-server:qgis-server
 
