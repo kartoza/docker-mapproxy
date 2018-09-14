@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapproxy Demo Service</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/leaflet.css"/>
+    <link rel="stylesheet" href="./css/leaflet.zoomdisplay.css"/>
+    <link rel="stylesheet" href="./css/leaflet.wmslegend.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            background: white;
+        }
+
+    </style>
+    <link rel="shortcut icon" href="http://kartoza.com/img/favicon.ico" type="image/x-icon"/>
+    <script src="./js/leaflet.wmslegend.js"></script>
+</head>
+<body>
+<div id="map"></div>
+<script src="./js/leaflet.js"></script>
+<script src="./js/leaflet.zoomdisplay.js"></script>
+<script src="./js/leaflet.wmslegend.js"></script>
+<link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="./css/Control.FullScreen.css"/>
+<script>
+
+
+    var map = L.map('map', {
+        center: [-33.343, 20.431],
+        zoom: 8,
+        minZoom: 8,
+        maxZoom: 20,
+        maxBounds: [[-34.9574676718948,16.139221774269384],[-30.2815345363471,25.94471079740128]],
+        fullscreenControl: true,
+        fullscreenControlOptions: {
+            position: 'topleft'
+        }
+    });
+
+
+    var base_map_0 = L.tileLayer('http://s.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: 'Data from <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; tiles &copy; <a href="http://carto.com/attributions">Carto</a>, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 22
+    });
+
+	
+	var base_map_1 = L.tileLayer('http://a.tile.stamen.com/terrain/{z}/{x}/{y}.png', {
+        attribution: 'Data from <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; tiles &copy; <a href="http://carto.com/attributions">Carto</a>, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 22
+    });
+
+     base_map_1.addTo(map);
+
+
+    var overlay_cities = L.tileLayer.wms('http://localhost:8082/service?', {
+        layers: 'cities',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+
+
+    });
+    map.addLayer(overlay_cities);
+    L.stamp(overlay_cities);
+
+    var overlay_rivers = L.tileLayer.wms('http://localhost:8082/service?', {
+        layers: 'rivers',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+
+    });
+    map.addLayer(overlay_rivers);
+    L.stamp(overlay_rivers);
+
+
+    var overlay_boundary = L.tileLayer.wms('http://localhost:8082/service?', {
+        layers: 'western_cape',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+    });
+
+    map.addLayer(overlay_boundary);
+
+
+    var baseMaps = { 'Carto Positron': base_map_0,'Stamen Terrain': base_map_1};
+    L.control.layers(baseMaps, {
+
+
+                    "Western Cape Boundary":overlay_boundary,
+                    "WC Rivers":overlay_rivers,
+                    "WC Cities":overlay_cities
+                    }).addTo(map);
+
+</script>
+
+
+</body>
+</html>
+
+
+
+

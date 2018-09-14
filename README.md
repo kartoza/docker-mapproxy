@@ -66,6 +66,12 @@ The cached wms tiles will be written to ``./mapproxy/cache_data``.
 **Note** that the mapproxy containerised application will run as the user that
 owns the /mapproxy folder.
 
+# docker-compose
+You can setup the services using the docker-compose. The docker-compose sets up the QGIS server 
+container and links it to the mapproxy container. 
+
+A index.html is provided in the web folder to preview the layers in mapproxy.
+
 # Reverse proxy
 
 The mapproxy container 'speaks' ``uwsgi`` so you need to put nginx in front of it

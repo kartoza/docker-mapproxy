@@ -36,11 +36,13 @@ services:
     # list of feature info types the server should offer
     featureinfo_types: ['text', 'html', 'xml']
 
+
+
     md:
       # metadata used in capabilities documents
       title: Mapproxy demo map
       abstract: The map showing how QGIS Server interacts with Mapproxy.
-      online_resource:
+      online_resource: http://kartoza.com/
       contact:
         person: Kartoza
         position: GIS Manager
@@ -51,31 +53,26 @@ services:
         country: south Africa
         phone:
         email:
-      # multiline strings are possible with the right indention
       access_constraints:
         Insert license and copyright information for this service.
       fees: 'None'
 
 layers:
-  # layer with minimal options
-  - name: sa
+  - name: western_cape
     title: Western Cape Provincial Boundary
     sources: [boundary_cache]
 
 
-  # layer with multiple sources
   - name: cities
     title: Western Cape cities
     sources: [city_cache]
 
-    # layer with multiple sources
-    - name: rivers
-      title: Western Cape rivers
-      sources: [river_cache]
+  - name: rivers
+    title: Western Cape rivers
+    sources: [river_cache]
 
 caches:
   
-  # mbtile cache:
   boundary_cache:
     sources: [boundary_wms]
     grids: [osm_grid]
@@ -90,11 +87,13 @@ caches:
   city_cache:
     sources: [city_wms]
     grids: [osm_grid]
-    file_cache:
-      cache:
-        type: file
-        directory: /mapproxy/city_cache
-      format: custom_format
+    meta_size: [5,5]
+    meta_buffer: 20
+    concurrent_tile_creators: 2
+    cache:
+      type: file
+      directory: /mapproxy/city_cache
+    format: custom_format
 
   river_cache:
     sources: [river_wms]
@@ -109,11 +108,12 @@ caches:
 sources:
   boundary_wms:
     coverage:
+
       bbox: [16.3449768409, -34.8191663551, 32.830120477, -22.0913127581]
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://localhost:8081/?map=/web/project.qgs
+      url: http://qgis-server:80/?map=/web/project.qgs
       layers: western_cape
       transparent: true
     supported_formats: [png]
@@ -126,7 +126,7 @@ sources:
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://localhost:8081/?map=/web/project.qgs
+      url: http://qgis-server:80/?map=/web/project.qgs
       layers: rivers
       transparent: true
     supported_formats: [png]
@@ -140,8 +140,8 @@ sources:
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://localhost:8081/?map=/web/project.qgs
-      layers: city
+      url: http://qgis-server:80/?map=/web/project.qgs
+      layers: cities
       transparent: true
     supported_formats: [png]
     supported_srs: ['EPSG:3857', 'CRS:84']
