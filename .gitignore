@@ -4,3 +4,4 @@ mapproxy
 configuration/cache_data
 configuration/city_cache
 city_cache/*.py
+.idea/*

@@ -20,8 +20,6 @@
         }
 
     </style>
-    <link rel="shortcut icon" href="http://kartoza.com/img/favicon.ico" type="image/x-icon"/>
-    <script src="./js/leaflet.wmslegend.js"></script>
 </head>
 <body>
 <div id="map"></div>
@@ -34,11 +32,11 @@
 
 
     var map = L.map('map', {
-        center: [-33.343, 20.431],
-        zoom: 8,
-        minZoom: 8,
+        center: [34.71, 17.97],
+        zoom: 4,
+        minZoom: 4,
         maxZoom: 20,
-        maxBounds: [[-34.9574676718948,16.139221774269384],[-30.2815345363471,25.94471079740128]],
+        maxBounds: [[-11.320837769222928,13.387481879430712],[41.02183656447146,76.7806739241933]],
         fullscreenControl: true,
         fullscreenControlOptions: {
             position: 'topleft'
@@ -51,42 +49,18 @@
         maxZoom: 22
     });
 
-	
+	base_map_0.addTo(map);
+
 	var base_map_1 = L.tileLayer('http://a.tile.stamen.com/terrain/{z}/{x}/{y}.png', {
         attribution: 'Data from <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; tiles &copy; <a href="http://carto.com/attributions">Carto</a>, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
         maxZoom: 22
     });
 
-     base_map_1.addTo(map);
+	var base_map_2 = L.tileLayer.wms('', {});
 
 
-    var overlay_cities = L.tileLayer.wms('http://localhost:8082/service?', {
-        layers: 'cities',
-        format: 'image/png',
-        uppercase: true,
-        transparent: true,
-        continuousWorld: true,
-        opacity: 1.0
 
-
-    });
-    map.addLayer(overlay_cities);
-    L.stamp(overlay_cities);
-
-    var overlay_rivers = L.tileLayer.wms('http://localhost:8082/service?', {
-        layers: 'rivers',
-        format: 'image/png',
-        uppercase: true,
-        transparent: true,
-        continuousWorld: true,
-        opacity: 1.0
-
-    });
-    map.addLayer(overlay_rivers);
-    L.stamp(overlay_rivers);
-
-
-    var overlay_boundary = L.tileLayer.wms('http://localhost:8082/service?', {
+     var overlay_airports = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
         layers: 'western_cape',
         format: 'image/png',
         uppercase: true,
@@ -95,17 +69,42 @@
         opacity: 1.0
     });
 
-    map.addLayer(overlay_boundary);
+    map.addLayer(overlay_airports);
+    L.stamp(overlay_airports);
+
+    var overlay_hillshade = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
+        layers: 'Hillshade',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
 
 
-    var baseMaps = { 'Carto Positron': base_map_0,'Stamen Terrain': base_map_1};
-    L.control.layers(baseMaps, {
+    });
+    map.addLayer(overlay_hillshade);
+    L.stamp(overlay_hillshade);
+
+    var overlay_srtm = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
+        layers: 'SRTM',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+
+    });
+    map.addLayer(overlay_srtm);
+    L.stamp(overlay_srtm);
 
 
-                    "Western Cape Boundary":overlay_boundary,
-                    "WC Rivers":overlay_rivers,
-                    "WC Cities":overlay_cities
-                    }).addTo(map);
+
+
+
+    var baseMaps = { 'Carto Positron': base_map_0,'Stamen Terrain': base_map_1, 'Empty Basemap': base_map_2};
+    var overlays = {"Hillshade":overlay_hillshade,
+                    "SRTM":overlay_srtm, "Airports":overlay_airports};
+    L.control.layers(baseMaps, overlays).addTo(map);
 
 </script>
 

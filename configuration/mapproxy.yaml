@@ -58,90 +58,90 @@ services:
       fees: 'None'
 
 layers:
-  - name: western_cape
-    title: Western Cape Provincial Boundary
-    sources: [boundary_cache]
+  - name: Hillshade
+    title: Hillshade
+    sources: [hillshade_cache]
 
 
-  - name: cities
-    title: Western Cape cities
-    sources: [city_cache]
+  - name: SRTM
+    title: SRTM 30m
+    sources: [srtm_cache]
 
-  - name: rivers
-    title: Western Cape rivers
-    sources: [river_cache]
+  - name: airports
+    title: Airports
+    sources: [airports_cache]
 
 caches:
   
-  boundary_cache:
-    sources: [boundary_wms]
+  airports_cache:
+    sources: [airports_wms]
     grids: [osm_grid]
     meta_size: [5,5]
     meta_buffer: 20
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: boundary.mbtiles
+      filename: airports.mbtiles
 
 
-  city_cache:
-    sources: [city_wms]
+  srtm_cache:
+    sources: [srtm_wms]
     grids: [osm_grid]
     meta_size: [5,5]
     meta_buffer: 20
     concurrent_tile_creators: 2
     cache:
       type: file
-      directory: /mapproxy/city_cache
+      directory: /mapproxy/srtm_cache
     format: custom_format
 
-  river_cache:
-    sources: [river_wms]
+  hillshade_cache:
+    sources: [hillshade_wms]
     grids: [osm_grid]
     meta_size: [5,5]
     meta_buffer: 20
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: river.mbtiles
+      filename: hillshade.mbtiles
 
 sources:
-  boundary_wms:
+  hillshade_wms:
     coverage:
 
-      bbox: [16.3449768409, -34.8191663551, 32.830120477, -22.0913127581]
+      bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://qgis-server:80/?map=/web/project.qgs
-      layers: western_cape
+      url: http://map:8080/ows/?map=/web/project.qgs
+      layers: Hillshade
       transparent: true
     supported_formats: [png]
     supported_srs: ['EPSG:3857', 'CRS:84']
 
 
-  river_wms:
+  srtm_wms:
     coverage:
-      bbox: [16.3449768409, -34.8191663551, 32.830120477, -22.0913127581]
+      bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://qgis-server:80/?map=/web/project.qgs
-      layers: rivers
+      url: http://map:8080/ows/?map=/web/project.qgs
+      layers: SRTM
       transparent: true
     supported_formats: [png]
     supported_srs: ['EPSG:3857', 'CRS:84']
 
 
 
-  city_wms:
+  airports_wms:
     coverage:
-      bbox: [16.3449768409, -34.8191663551, 32.830120477, -22.0913127581]
+      bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
     req:
-      url: http://qgis-server:80/?map=/web/project.qgs
-      layers: cities
+      url: http://map:8080/ows/?map=/web/project.qgs
+      layers: Airports
       transparent: true
     supported_formats: [png]
     supported_srs: ['EPSG:3857', 'CRS:84']
