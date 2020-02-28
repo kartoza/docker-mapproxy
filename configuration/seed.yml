@@ -7,8 +7,8 @@
 #
 
 seeds:
-  sa_boundary:
-    caches: [boundary_cache]
+  hillshade_boundary:
+    caches: [hillshade_cache]
     # grids: []
     # coverages: []
     levels:
@@ -17,8 +17,16 @@ seeds:
 
 
 
-  cities_seed:
-    caches: [city_cache]
+  srtm_seed:
+    caches: [srtm_cache]
+    # grids: []
+    # coverages: []
+    levels:
+      from: 6
+      to: 20
+
+  airports_seed:
+    caches: [airports_cache]
     # grids: []
     # coverages: []
     levels:
