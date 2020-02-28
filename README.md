@@ -49,18 +49,19 @@ docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/mapproxy:/mapproxy kart
 ```
 
 The first time your run the container, mapproxy basic default configuration
-files will be written into ``./mapproxy``. You should read the mapproxy documentation
+files will be written into ``./configuration``. You should read the mapproxy documentation
 on how to configure these files and create appropriate service definitions for 
 your WMS services. Then restart the container to activate your changes.
 
-The cached wms tiles will be written to ``./mapproxy/cache_data``.
+The cached wms tiles will be written to ``./configuration/cache_data`` externally or any other path that is
+defined by the mapproxy.yaml.
 
 **Note** that the mapproxy containerised application will run as the user that
 owns the /mapproxy folder.
 
 # docker-compose
 You can setup the services using the docker-compose. The docker-compose sets up the QGIS server 
-container and links it to the mapproxy container. 
+container and links it to the mapproxy container and nginx for reverse proxy. 
 
 A index.html is provided in the web folder to preview the layers in mapproxy.
 
@@ -79,7 +80,7 @@ In the example below the nginx container is running on
 ``localhost`` on port 8080.
 
 ```
-http://localhost:8080/mapproxy/service/?
+http://localhost/mapproxy/service/?
 ```
 
 -----------

@@ -30,7 +30,7 @@ services:
     depends_on:
       - mapproxy
     ports:
-    - 8100:80
+    - 80:80
 
 
 

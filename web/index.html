@@ -60,8 +60,8 @@
 
 
 
-     var overlay_airports = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
-        layers: 'western_cape',
+     var overlay_airports = L.tileLayer.wms('http://localhost/mapproxy/service?', {
+        layers: 'airports',
         format: 'image/png',
         uppercase: true,
         transparent: true,
@@ -72,7 +72,7 @@
     map.addLayer(overlay_airports);
     L.stamp(overlay_airports);
 
-    var overlay_hillshade = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
+    var overlay_hillshade = L.tileLayer.wms('http://localhost/mapproxy/service?', {
         layers: 'Hillshade',
         format: 'image/png',
         uppercase: true,
@@ -85,7 +85,7 @@
     map.addLayer(overlay_hillshade);
     L.stamp(overlay_hillshade);
 
-    var overlay_srtm = L.tileLayer.wms('http://localhost:8100/mapproxy/service?', {
+    var overlay_srtm = L.tileLayer.wms('http://localhost/mapproxy/service?', {
         layers: 'SRTM',
         format: 'image/png',
         uppercase: true,
