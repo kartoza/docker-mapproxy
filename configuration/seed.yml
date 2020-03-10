@@ -1,0 +1,35 @@
+# ---------------------------------------
+# MapProxy example seeding configuration.
+# ---------------------------------------
+#
+# This is a minimal MapProxy seeding configuration.
+# See full_seed_example.yaml and the documentation for more options.
+#
+
+seeds:
+  hillshade_boundary:
+    caches: [hillshade_cache]
+    # grids: []
+    # coverages: []
+    levels:
+      from: 6
+      to: 15
+
+
+
+  srtm_seed:
+    caches: [srtm_cache]
+    # grids: []
+    # coverages: []
+    levels:
+      from: 6
+      to: 20
+
+  airports_seed:
+    caches: [airports_cache]
+    # grids: []
+    # coverages: []
+    levels:
+      from: 6
+      to: 20
+

@@ -1,0 +1,40 @@
+version: '2.1'
+
+services:
+  map:
+    image: 3liz/qgis-map-server:3.12
+    environment:
+      - QGSRV_SERVER_WORKERS=6
+      - QGSRV_LOGGING_LEVEL=DEBUG
+      - QGSRV_CACHE_ROOTDIR=/web
+      - QGSRV_CACHE_SIZE=100
+      - QGSRV_SERVER_TIMEOUT=300
+    volumes:
+      - ./data:/web
+  mapproxy:
+    image: kartoza/mapproxy
+    volumes:
+      - ./configuration:/mapproxy
+    depends_on:
+      - map
+  ngnix:
+    image: nginx
+    volumes:
+      - ./web:/web
+      - ./sites-enabled:/etc/nginx/conf.d:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: 200m
+        max-file: '10'
+    depends_on:
+      - mapproxy
+    ports:
+    - 80:80
+
+
+
+
+
+
+

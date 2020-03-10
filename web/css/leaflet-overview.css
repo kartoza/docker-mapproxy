@@ -1,0 +1,20 @@
+.leaflet-control-overview {
+  margin-right: 10px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid #bbb;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  }
+  
+.leaflet-control-overview-map {
+  width: 128px;
+  height: 128px;
+  border: 5px solid white;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  }
+  
