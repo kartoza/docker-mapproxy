@@ -7,9 +7,10 @@ RUN apt-get -y update
 #-------------Application Specific Stuff ----------------------------------------------------
 
 RUN apt-get install -y \
-    python-imaging \
+    #python-imaging # deprecated, replaced by python-pip\
+    python-pip \
     python-yaml \
-    libproj0 \
+    #libproj0 # deprecated, not needed\
     libgeos-dev \
     python-lxml \
     libgdal-dev \
