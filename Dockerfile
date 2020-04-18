@@ -1,5 +1,5 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM python:2.7
+FROM python:3.7
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 RUN apt-get -y update
@@ -7,9 +7,7 @@ RUN apt-get -y update
 #-------------Application Specific Stuff ----------------------------------------------------
 
 RUN apt-get install -y \
-    python-imaging \
     python-yaml \
-    libproj0 \
     libgeos-dev \
     python-lxml \
     libgdal-dev \
@@ -19,6 +17,7 @@ RUN apt-get install -y \
     zlib1g-dev \
     libfreetype6-dev \
     python-virtualenv
+
 RUN pip install Shapely Pillow MapProxy uwsgi
 
 EXPOSE 8080

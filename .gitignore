@@ -3,5 +3,6 @@ tilestore
 mapproxy
 configuration/cache_data
 configuration/city_cache
+configuration/app.py
 city_cache/*.py
-.idea/*
+.idea*
