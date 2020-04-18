@@ -18,7 +18,7 @@ RUN apt-get install -y \
     libfreetype6-dev \
     python-virtualenv
 
-RUN pip install Shapely Pillow MapProxy==1.12.0 uwsgi
+RUN pip install Shapely Pillow MapProxy uwsgi
 
 EXPOSE 8080
 
