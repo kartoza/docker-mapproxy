@@ -13,18 +13,13 @@ services:
   demo:
   wms:
     # only offer WMS 1.1.1
-    versions: ['1.1.1']
-
+    versions: ['1.1.1', '1.3.0']
     # supported SRS for this WMS
     srs: ['EPSG:4326', 'EPSG:3857']
-
     # force the layer extents (BBOX) to be displayed in this SRS
     bbox_srs: ['EPSG:4326']
-
     # limit the supported image formats.
     image_formats: ['image/jpeg', 'image/png', 'image/gif', 'image/GeoTIFF', 'image/tiff']
-
-    
     # return an OGC service exception when one or more sources return errors
     # or no response at all (e.g. timeout)
     on_source_errors: raise
@@ -35,6 +30,8 @@ services:
 
     # list of feature info types the server should offer
     featureinfo_types: ['text', 'html', 'xml']
+  tms:
+    use_grid_names: true
 
 
 
@@ -71,6 +68,8 @@ layers:
     title: Airports
     sources: [airports_cache]
 
+
+
 caches:
   
   airports_cache:
@@ -84,6 +83,7 @@ caches:
       filename: airports.mbtiles
 
 
+
   srtm_cache:
     sources: [srtm_wms]
     grids: [osm_grid]
@@ -92,7 +92,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: file
-      directory: /mapproxy/srtm_cache
+      directory: /mapproxy/cache_data/srtm_cache
     format: custom_format
 
   hillshade_cache:
@@ -112,6 +112,12 @@ sources:
       bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
+    image:
+      transparent_color: '#ffffff'
+      transparent_color_tolerance: 20
+    wms_opts:
+      version: 1.3.0
+      featureinfo: True
     req:
       url: http://map:8080/ows/?map=/web/project.qgs
       layers: Hillshade
@@ -125,6 +131,12 @@ sources:
       bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
+    image:
+      transparent_color: '#ffffff'
+      transparent_color_tolerance: 20
+    wms_opts:
+      version: 1.3.0
+      featureinfo: True
     req:
       url: http://map:8080/ows/?map=/web/project.qgs
       layers: SRTM
@@ -133,12 +145,17 @@ sources:
     supported_srs: ['EPSG:3857', 'CRS:84']
 
 
-
   airports_wms:
     coverage:
       bbox: [20, -9.99999999998001, 59.999999999984, 40]
       bbox_srs: EPSG:4326
     type: wms
+    image:
+      transparent_color: '#ffffff'
+      transparent_color_tolerance: 20
+    wms_opts:
+      version: 1.3.0
+      featureinfo: True
     req:
       url: http://map:8080/ows/?map=/web/project.qgs
       layers: Airports
@@ -159,3 +176,5 @@ globals:
     lock_dir: './cache_data/locks'
     # where to store lockfiles for tile creation
     tile_lock_dir: './cache_data/tile_locks'
+  http:
+    ssl_no_cert_checks: true

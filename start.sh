@@ -1,4 +1,27 @@
 #!/bin/bash
+
+if [[ -f /uwsgi.conf ]]; then
+  rm /uwsgi.conf
+fi;
+cat > /uwsgi.conf <<EOF
+[uwsgi]
+chdir = /mapproxy
+pyargv = /mapproxy.yaml
+wsgi-file = app.py
+pidfile=/tmp/mapproxy.pid
+socket = 0.0.0.0:8080
+#socket = /tmp/mapproxy-uwsgi.socket
+processes = $PROCESSES
+cheaper = 2
+threads = $THREADS
+master = true
+req-logger = file:/var/log/uwsgi-requests.log
+logger = file:/var/log/uwsgi-errors.log
+memory-report = true
+harakiri = 60
+chmod-socket = 777
+EOF
+
 USER_ID=`ls -lahn / | grep mapproxy | awk '{print $3}'`
 GROUP_ID=`ls -lahn / | grep mapproxy | awk '{print $4}'`
 USER_NAME=`ls -lah / | grep mapproxy | awk '{print $3}'`

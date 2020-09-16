@@ -21,8 +21,10 @@ RUN apt-get install -y \
 RUN pip install Shapely Pillow MapProxy uwsgi
 
 EXPOSE 8080
+ENV \
+    PROCESSES=4 \
+    THREADS=10
 
-ADD uwsgi.conf /uwsgi.conf
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 
