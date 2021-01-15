@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [[ -f /uwsgi.conf ]]; then
-  rm /uwsgi.conf
+if [[ -f /uwsgi.ini ]]; then
+  rm /uwsgi.ini
 fi;
-cat > /uwsgi.conf <<EOF
+cat > /uwsgi.ini <<EOF
 [uwsgi]
 chdir = /mapproxy
 pyargv = /mapproxy.yaml
@@ -12,8 +12,10 @@ pidfile=/tmp/mapproxy.pid
 http = 0.0.0.0:8080
 processes = $PROCESSES
 cheaper = 2
+enable-threads = true
 threads = $THREADS
 master = true
+wsgi-disable-file-wrapper = true
 req-logger = file:/var/log/uwsgi-requests.log
 logger = file:/var/log/uwsgi-errors.log
 memory-report = true
@@ -34,6 +36,13 @@ then
   su $USER_NAME -c "mapproxy-util create -t base-config mapproxy"
 fi
 cd /mapproxy
+# Add logic to reload the app file
+
 su $USER_NAME -c "mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py"
+RELOAD_LOCKFILE=/mapproxy/.app.lock
+if [[ ! -f ${RELOAD_LOCKFILE} ]];then
+  sed -i 's/'\)/', reloader=True\)/g' app.py
+fi
 #su $USER_NAME -c "uwsgi --ini /uwsgi.conf"
-su $USER_NAME -c "mapproxy-util serve-develop -b 0.0.0.0:8080 mapproxy.yaml"
+exec uwsgi --ini /uwsgi.ini
+
