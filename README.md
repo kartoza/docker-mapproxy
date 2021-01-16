@@ -60,7 +60,7 @@ defined by the mapproxy.yaml.
 owns the /mapproxy folder.
 
 # docker-compose
-You can setup the services using the docker-compose. The docker-compose sets up the QGIS server 
+You can set up the services using the docker-compose. The docker-compose sets up the QGIS server 
 container and links it to the mapproxy container and nginx for reverse proxy. 
 
 A index.html is provided in the web folder to preview the layers in mapproxy.
@@ -87,4 +87,4 @@ http://localhost/mapproxy/service/?
 
 Tim Sutton (tim@kartoza.com)
 Admire Nyakudya (admire@kartoza.com)
-February 2020
+January 2021

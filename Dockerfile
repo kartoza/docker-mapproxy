@@ -27,10 +27,10 @@ ENV \
 
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
-
-#USER www-data
-# Now launch mappproxy in the foreground
-# The script will create a simple config in /mapproxy
-# if one does not exist. Typically you should mount 
-# /mapproxy as a volume
+RUN mkdir -p /mapproxy /settings
+RUN groupadd -r mapproxy -g 10001 && \
+    useradd -m -d /home/mapproxy/ --gid 10001 -s /bin/bash -G mapproxy mapproxy
+RUN chown -R mapproxy:mapproxy /mapproxy /settings /start.sh
+VOLUME [ "/mapproxy"]
+USER mapproxy
 CMD /start.sh

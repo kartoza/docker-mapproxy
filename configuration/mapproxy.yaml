@@ -30,10 +30,6 @@ services:
 
     # list of feature info types the server should offer
     featureinfo_types: ['text', 'html', 'xml']
-  tms:
-    use_grid_names: true
-
-
 
     md:
       # metadata used in capabilities documents
@@ -53,6 +49,8 @@ services:
       access_constraints:
         Insert license and copyright information for this service.
       fees: 'None'
+  tms:
+    use_grid_names: true
 
 layers:
   - name: Hillshade

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [[ -f /uwsgi.conf ]]; then
-  rm /uwsgi.conf
+if [[ -f /settings/uwsgi.ini ]]; then
+  rm /settings/uwsgi.ini
 fi;
-cat > /uwsgi.conf <<EOF
+cat > /settings/uwsgi.ini <<EOF
 [uwsgi]
 chdir = /mapproxy
 pyargv = /mapproxy.yaml
@@ -12,28 +12,34 @@ pidfile=/tmp/mapproxy.pid
 http = 0.0.0.0:8080
 processes = $PROCESSES
 cheaper = 2
+enable-threads = true
 threads = $THREADS
 master = true
+wsgi-disable-file-wrapper = true
 req-logger = file:/var/log/uwsgi-requests.log
 logger = file:/var/log/uwsgi-errors.log
 memory-report = true
 harakiri = 60
-chmod-socket = 777
+chmod-socket = 664
+uid = 1000
+gid = 10001
 EOF
 
-USER_ID=`ls -lahn / | grep mapproxy | awk '{print $3}'`
-GROUP_ID=`ls -lahn / | grep mapproxy | awk '{print $4}'`
-USER_NAME=`ls -lah / | grep mapproxy | awk '{print $3}'`
-
-groupadd -g $GROUP_ID mapproxy
-useradd --shell /bin/bash --uid $USER_ID --gid $GROUP_ID $USER_NAME
 
 # Create a default mapproxy config is one does not exist in /mapproxy
 if [ ! -f /mapproxy/mapproxy.yaml ]
 then
-  su $USER_NAME -c "mapproxy-util create -t base-config mapproxy"
+  mapproxy-util create -t base-config mapproxy
 fi
 cd /mapproxy
-su $USER_NAME -c "mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py"
+# Add logic to reload the app file
+
+mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py
+RELOAD_LOCKFILE=/settings/.app.lock
+if [[ ! -f ${RELOAD_LOCKFILE} ]];then
+  sed -i 's/'\)/', reloader=True\)/g' app.py
+  touch ${RELOAD_LOCKFILE}
+fi
 #su $USER_NAME -c "uwsgi --ini /uwsgi.conf"
-su $USER_NAME -c "mapproxy-util serve-develop -b 0.0.0.0:8080 mapproxy.yaml"
+exec uwsgi --ini /settings/uwsgi.ini
+
