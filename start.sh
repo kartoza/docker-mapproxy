@@ -16,8 +16,6 @@ enable-threads = true
 threads = $THREADS
 master = true
 wsgi-disable-file-wrapper = true
-req-logger = file:/var/log/uwsgi-requests.log
-logger = file:/var/log/uwsgi-errors.log
 memory-report = true
 harakiri = 60
 chmod-socket = 664
@@ -41,5 +39,11 @@ if [[ ! -f ${RELOAD_LOCKFILE} ]];then
   touch ${RELOAD_LOCKFILE}
 fi
 #su $USER_NAME -c "uwsgi --ini /uwsgi.conf"
-exec uwsgi --ini /settings/uwsgi.ini
+
+if [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]]; then
+  exec uwsgi --ini /settings/uwsgi.ini
+else
+  mapproxy-util serve-develop -b 0.0.0.0:8080 mapproxy.yaml
+fi
+
 
