@@ -22,8 +22,11 @@ RUN pip install Shapely Pillow MapProxy uwsgi
 
 EXPOSE 8080
 ENV \
-    PROCESSES=4 \
-    THREADS=10
+    # Run
+    PROCESSES=6 \
+    THREADS=10 \
+    # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
+    PRODUCTION=true
 
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh

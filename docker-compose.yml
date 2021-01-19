@@ -13,6 +13,10 @@ services:
       - ./data:/web
   mapproxy:
     image: kartoza/mapproxy
+    environment:
+      - PRODUCTION=true
+      - PROCESSES=4
+      - THREADS=10
     volumes:
       - ./configuration:/mapproxy
     depends_on:
