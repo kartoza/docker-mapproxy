@@ -1,28 +1,16 @@
 #!/bin/bash
 
-if [[ -f /settings/uwsgi.ini ]]; then
-  rm /settings/uwsgi.ini
-fi;
-cat > /settings/uwsgi.ini <<EOF
-[uwsgi]
-chdir = /mapproxy
-pyargv = /mapproxy.yaml
-wsgi-file = app.py
-pidfile=/tmp/mapproxy.pid
-http = 0.0.0.0:8080
-processes = $PROCESSES
-cheaper = 2
-enable-threads = true
-threads = $THREADS
-master = true
-wsgi-disable-file-wrapper = true
-memory-report = true
-harakiri = 60
-chmod-socket = 664
-uid = 1000
-gid = 10001
-EOF
-
+# Check if uwsgi configuration exists
+if [[ ! -f /settings/uwsgi.ini ]]; then
+  echo "/settings/uwsgi.ini doesn't exists"
+  # If it doesn't exists, copy from /mapproxy directory if exists
+  if [[ -f /mapproxy/uwsgi.ini ]]; then
+    cp -f /mapproxy/uwsgi.ini /settings/uwsgi.ini
+  else
+    # default value
+    envsubst < /settings/uwsgi.default.ini > /settings/uwsgi.ini
+  fi
+fi
 
 # Create a default mapproxy config is one does not exist in /mapproxy
 if [ ! -f /mapproxy/mapproxy.yaml ]
@@ -35,7 +23,7 @@ cd /mapproxy
 mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py
 RELOAD_LOCKFILE=/settings/.app.lock
 if [[ ! -f ${RELOAD_LOCKFILE} ]];then
-  sed -i 's/'\)/', reloader=True\)/g' app.py
+  sed -i 's/\(, reloader=True\)*'\)'/, reloader=True\)/g' app.py
   touch ${RELOAD_LOCKFILE}
 fi
 #su $USER_NAME -c "uwsgi --ini /uwsgi.conf"
@@ -43,7 +31,5 @@ fi
 if [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]]; then
   exec uwsgi --ini /settings/uwsgi.ini
 else
-  mapproxy-util serve-develop -b 0.0.0.0:8080 mapproxy.yaml
+  exec "$@"
 fi
-
-

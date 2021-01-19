@@ -7,6 +7,7 @@ RUN apt-get -y update
 #-------------Application Specific Stuff ----------------------------------------------------
 
 RUN apt-get install -y \
+    gettext \
     python-yaml \
     libgeos-dev \
     python-lxml \
@@ -28,6 +29,7 @@ ENV \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
     PRODUCTION=true
 
+ADD uwsgi.ini /settings/uwsgi.default.ini
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 RUN mkdir -p /mapproxy /settings
@@ -36,4 +38,5 @@ RUN groupadd -r mapproxy -g 10001 && \
 RUN chown -R mapproxy:mapproxy /mapproxy /settings /start.sh
 VOLUME [ "/mapproxy"]
 USER mapproxy
-CMD /start.sh
+ENTRYPOINT [ "/start.sh" ]
+CMD ["mapproxy-util", "serve-develop", "-b", "0.0.0.0:8080", "mapproxy.yaml"]
