@@ -17,11 +17,12 @@ services:
       - PRODUCTION=true
       - PROCESSES=4
       - THREADS=10
+    user: "1000:10001"
     volumes:
       - ./configuration:/mapproxy
     depends_on:
       - map
-  ngnix:
+  nginx:
     image: nginx
     volumes:
       - ./web:/web
