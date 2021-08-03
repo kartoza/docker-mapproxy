@@ -48,6 +48,11 @@ mkdir mapproxy
 docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/mapproxy:/mapproxy kartoza/mapproxy
 ```
 
+To set the telemetry endpoint of the application set the TELEMETRY_ENDPOINT env variable:
+```
+docker run --name "mapproxy" -e TELEMETRY_ENDPOINT='localhost:4317' -p 8080:8080 -d -t kartoza/mapproxy
+```
+
 The first time your run the container, mapproxy basic default configuration
 files will be written into ``./configuration``. You should read the mapproxy documentation
 on how to configure these files and create appropriate service definitions for 

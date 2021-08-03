@@ -15,18 +15,30 @@ RUN apt-get install -y \
     zlib1g-dev \
     libfreetype6-dev \
     python-virtualenv
-RUN pip install Shapely Pillow MapProxy uwsgi boto3 botocore
+RUN pip install Shapely Pillow MapProxy uwsgi boto3 botocore \
+    opentelemetry-api \
+    opentelemetry-sdk \
+    opentelemetry-exporter-otlp \
+    opentelemetry-instrumentation-wsgi \
+    opentelemetry-instrumentation-sqlite3 \
+    opentelemetry-instrumentation-boto
 EXPOSE 8080
 ENV \
     # Run
     PROCESSES=6 \
     THREADS=10 \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
-    PRODUCTION=true
+    PRODUCTION=true \
+    # Set telemetry endpoint
+    TELEMETRY_ENDPOINT='localhost:8080' \
+    OTEL_SERVICE_NAME='mapproxy'
+
 ADD uwsgi.ini /settings/uwsgi.default.ini
+ADD app.py /app.py
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 RUN mkdir -p /mapproxy /settings
+
 # RUN groupadd -r mapproxy -g 10001 && \
 # RUN groupadd -r mapproxy -g 10001 && \
 #     useradd -m -d /home/mapproxy/ --gid 10001 -s /bin/bash -G mapproxy mapproxy
