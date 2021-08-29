@@ -15,8 +15,7 @@ if [ ! -f /mapproxy/mapproxy.yaml ]; then
   mapproxy-util create -t base-config mapproxy
 fi
 cd /mapproxy
-# Move app file to /mapproxy
-mv /app.py ./app.py
+
 # Add logic to reload the app file
 mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py
 RELOAD_LOCKFILE=/settings/.app.lock

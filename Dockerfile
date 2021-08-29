@@ -34,10 +34,10 @@ ENV \
     OTEL_SERVICE_NAME='mapproxy'
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
-ADD app.py /app.py
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 RUN mkdir -p /mapproxy /settings
+ADD app.py /mapproxy/app.py
 
 # RUN groupadd -r mapproxy -g 10001 && \
 # RUN groupadd -r mapproxy -g 10001 && \
