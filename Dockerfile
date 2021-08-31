@@ -3,7 +3,7 @@ FROM python:3.7.10
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 #-------------Application Specific Stuff ----------------------------------------------------
-RUN apt-get -y update \
+RUN apt-get -y update && \
     apt-get install -y \
     gettext \
     python-yaml \
