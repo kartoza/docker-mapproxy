@@ -2,11 +2,10 @@
 FROM python:3.7
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
-RUN apt-get -y update
-
 #-------------Application Specific Stuff ----------------------------------------------------
 
-RUN apt-get install -y \
+RUN apt-get -y update && \
+    apt-get install -y \
     gettext \
     python-yaml \
     libgeos-dev \
