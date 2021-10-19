@@ -21,24 +21,28 @@ from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
 from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
 
+#create map proxy application
+application = make_wsgi_app(r'/mapproxy/mapproxy.yaml', reloader=True)
+
 # Get telemetry endpoint from env
 endpoint = os.environ.get('TELEMETRY_ENDPOINT', 'localhost:8080')
+tracing_enabled = os.environ.get('TELEMETRY_TRACING_ENABLED', 'true')
 
-# Create span exporter
-span_exporter = OTLPSpanExporter(
-    endpoint=endpoint,
-)
+if tracing_enabled.strip().lower() == 'true':
+    # Create span exporter
+    span_exporter = OTLPSpanExporter(
+        endpoint=endpoint,
+    )
 
-# Set trance provider and processor
-tracer_provider = TracerProvider()
-trace.set_tracer_provider(tracer_provider)
-processor = SimpleSpanProcessor(span_exporter)
-tracer_provider.add_span_processor(processor)
+    # Set trance provider and processor
+    tracer_provider = TracerProvider()
+    trace.set_tracer_provider(tracer_provider)
+    processor = SimpleSpanProcessor(span_exporter)
+    tracer_provider.add_span_processor(processor)
 
-# Activate instruments
-BotocoreInstrumentor().instrument()
-SQLite3Instrumentor().instrument()
+    # Activate instruments
+    BotocoreInstrumentor().instrument()
+    SQLite3Instrumentor().instrument()
 
-# Add OpenTelemetry middleware and activate application
-application = make_wsgi_app(r'/mapproxy/mapproxy.yaml', reloader=True)
-application = OpenTelemetryMiddleware(application, None, None, tracer_provider)
+    # Add OpenTelemetry middleware and activate application
+    application = OpenTelemetryMiddleware(application, None, None, tracer_provider)

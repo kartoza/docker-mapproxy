@@ -17,7 +17,8 @@ fi
 cd /mapproxy
 
 # Add logic to reload the app file
-mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py
+# This was commented because the the file is manually created and added in build process  
+#mapproxy-util create -t wsgi-app -f mapproxy.yaml /mapproxy/app.py
 RELOAD_LOCKFILE=/settings/.app.lock
 if [[ ! -f ${RELOAD_LOCKFILE} ]]; then
   # This was commented because the reloader value is inserted with the new app.py we inject through the dockerfile

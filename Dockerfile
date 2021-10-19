@@ -22,7 +22,7 @@ RUN pip install Shapely Pillow MapProxy uwsgi boto3 botocore \
     opentelemetry-exporter-otlp \
     opentelemetry-instrumentation-wsgi \
     opentelemetry-instrumentation-sqlite3 \
-    opentelemetry-instrumentation-boto
+    opentelemetry-instrumentation-botocore
 EXPOSE 8080
 ENV \
     # Run
@@ -30,8 +30,9 @@ ENV \
     THREADS=10 \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
     PRODUCTION=true \
+    TELEMETRY_TRACING_ENABLED='true' \
     # Set telemetry endpoint
-    TELEMETRY_ENDPOINT='localhost:8080' \
+    TELEMETRY_TRACING_ENDPOINT='localhost:8080' \
     OTEL_SERVICE_NAME='mapproxy'
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
