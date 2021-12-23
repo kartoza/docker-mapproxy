@@ -16,13 +16,10 @@ RUN apt-get -y update && \
     zlib1g-dev \
     libfreetype6-dev \
     python-virtualenv
-RUN pip install Shapely Pillow MapProxy uwsgi boto3 botocore \
-    opentelemetry-api \
-    opentelemetry-sdk \
-    opentelemetry-exporter-otlp \
-    opentelemetry-instrumentation-wsgi \
-    opentelemetry-instrumentation-sqlite3 \
-    opentelemetry-instrumentation-botocore
+
+COPY requirements.txt /requirements.txt
+RUN pip install -r requirements.txt
+
 EXPOSE 8080
 ENV \
     # Run
@@ -32,19 +29,18 @@ ENV \
     PRODUCTION=true \
     TELEMETRY_TRACING_ENABLED='true' \
     # Set telemetry endpoint
-    TELEMETRY_TRACING_ENDPOINT='localhost:8080' \
-    OTEL_SERVICE_NAME='mapproxy'
+    TELEMETRY_ENDPOINT='localhost:4317' \
+    OTEL_RESOURCE_ATTRIBUTES='service.name=mapcolonies,application=mapproxy' \
+    OTEL_SERVICE_NAME='mapproxy' \
+    TELEMETRY_SAMPLING_RATIO_DENOMINATOR=1000
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
 ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 RUN mkdir -p /mapproxy /settings
+ADD log.ini /mapproxy/log.ini
 ADD app.py /mapproxy/app.py
 
-# RUN groupadd -r mapproxy -g 10001 && \
-# RUN groupadd -r mapproxy -g 10001 && \
-#     useradd -m -d /home/mapproxy/ --gid 10001 -s /bin/bash -G mapproxy mapproxy
-# RUN chown -R mapproxy:mapproxy /mapproxy /settings /start.sh
 RUN chgrp -R 0 /mapproxy /settings /start.sh && \
     chmod -R g=u /mapproxy /settings /start.sh
 RUN useradd -ms /bin/bash user && usermod -a -G root user
