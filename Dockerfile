@@ -7,18 +7,24 @@ MAINTAINER Tim Sutton<tim@kartoza.com>
 RUN apt-get -y update && \
     apt-get install -y \
     gettext \
-    python-yaml \
+    python3-yaml \
     libgeos-dev \
-    python-lxml \
+    python3-lxml \
     libgdal-dev \
     build-essential \
     python-dev \
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
-    python-virtualenv
+    python3-virtualenv
+RUN pip install Shapely Pillow MapProxy uwsgi pyproj
 
-RUN pip install Shapely Pillow MapProxy uwsgi
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y gosu; \
+	rm -rf /var/lib/apt/lists/*; \
+# verify that the binary works
+	gosu nobody true
 
 EXPOSE 8080
 ENV \
@@ -26,16 +32,13 @@ ENV \
     PROCESSES=6 \
     THREADS=10 \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
-    PRODUCTION=true
+    PRODUCTION=true \
+    MAPPROXY_DATA_DIR=/mapproxy
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
 ADD start.sh /start.sh
-RUN chmod 0755 /start.sh
-RUN mkdir -p /mapproxy /settings
-RUN groupadd -r mapproxy -g 10001 && \
-    useradd -m -d /home/mapproxy/ --gid 10001 -s /bin/bash -G mapproxy mapproxy
-RUN chown -R mapproxy:mapproxy /mapproxy /settings /start.sh
-VOLUME [ "/mapproxy"]
-USER mapproxy
+ADD run_develop_server.sh /run_develop_server.sh
+RUN chmod 0755 /start.sh /run_develop_server.sh
+
 ENTRYPOINT [ "/start.sh" ]
-CMD ["mapproxy-util", "serve-develop", "-b", "0.0.0.0:8080", "mapproxy.yaml"]
+CMD [ "/run_develop_server.sh" ]
