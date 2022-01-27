@@ -17,7 +17,6 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
     ###
     mkdir -p ${MAPPROXY_DATA_DIR} /settings
     chown -R mapproxy:mapproxy ${MAPPROXY_DATA_DIR} /settings /start.sh /run_develop_server.sh
-    chown -R mapproxy:mapproxy ${MAPPROXY_DATA_DIR}
 
     # Check if uwsgi configuration exists
     if [[ ! -f /settings/uwsgi.ini ]]; then
