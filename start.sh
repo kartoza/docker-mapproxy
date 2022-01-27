@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Running  $1 "
+
 if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
 
     USER_ID=${MAPPROXY_USER_ID:-1000}
@@ -13,8 +13,7 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
 
 
     ###
-    # Change CATALINA_HOME ownership to tomcat user and tomcat group
-    # Restrict permissions on conf
+    # Change  ownership to mapproxy user and mapproxy group
     ###
     mkdir -p ${MAPPROXY_DATA_DIR} /settings
     chown -R mapproxy:mapproxy ${MAPPROXY_DATA_DIR} /settings /start.sh /run_develop_server.sh
@@ -46,10 +45,8 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
       touch ${RELOAD_LOCKFILE}
     fi
     if [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]]; then
-        echo " running in production"
         exec gosu mapproxy uwsgi --ini /settings/uwsgi.ini
     else
-        echo " Now running default $@ "
         exec "$@"
     fi
 fi
