@@ -17,9 +17,8 @@ RUN apt-get -y update && \
     zlib1g-dev \
     libfreetype6-dev \
     python3-virtualenv
-RUN pip install Shapely Pillow MapProxy uwsgi pyproj
-
-RUN set -eux; \
+RUN pip install Shapely Pillow MapProxy uwsgi pyproj && \
+    set -eux; \
 	apt-get update; \
 	apt-get install -y gosu; \
 	rm -rf /var/lib/apt/lists/*; \
