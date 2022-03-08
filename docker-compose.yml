@@ -17,7 +17,8 @@ services:
       - PRODUCTION=true
       - PROCESSES=4
       - THREADS=10
-    user: "1000:10001"
+      - MAPPROXY_USER_ID=1000
+      - MAPPROXY_GROUP_ID=1000
     volumes:
       - ./configuration:/mapproxy
     depends_on:
