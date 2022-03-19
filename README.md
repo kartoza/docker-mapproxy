@@ -31,7 +31,27 @@ git clone git://github.com/kartoza/docker-mapproxy
 ```
 docker build -t kartoza/mapproxy .
 ```
+# Environment variables
+The image specifies a couple of environment variables
 
+* `PROCESSES`=number of processes to run uwsgi in. Only available
+  when running the production version.
+* `THREADS`=maximum number of parallel threads to run production instance with. 
+* `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwgi
+* `MAPPROXY_DATA_DIR`=path to store all mapproxy configs
+* `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
+
+# Mounting Configs
+
+When running in production you can specify any uwsgi parameters.
+
+You can mount the [uwsgi.ini](https://github.com/kartoza/docker-mapproxy/blob/master/uwsgi.ini) to
+a path inside the container thus overriding a lot of the uwsgi default settings.
+
+```bash
+-v /data/uwsgi.ini:/settings/uwsgi.ini
+```
+    
 # Run
 
 To run a mapproxy container do:
@@ -40,7 +60,7 @@ To run a mapproxy container do:
 docker run --name "mapproxy" -p 8080:8080 -d -t kartoza/mapproxy
 ```
 
-Typically you will want to mount the mapproxy volume, otherwise you won't be
+Typically, you will want to mount the mapproxy volume, otherwise you won't be
 able to edit the configs:
 
 ```
