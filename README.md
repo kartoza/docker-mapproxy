@@ -40,6 +40,8 @@ The image specifies a couple of environment variables
 * `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwgi
 * `MAPPROXY_DATA_DIR`=path to store all mapproxy configs
 * `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
+* `LOGGING`=Boolean value to indicate if you need to activate logging. Useful
+when using uwsgi (not in multi-app mode)
 
 # Mounting Configs
 
