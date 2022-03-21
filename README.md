@@ -42,7 +42,6 @@ The image specifies a couple of environment variables
   when running the production version.
 * `THREADS`=maximum number of parallel threads to run production instance with. 
 * `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwgi
-* `MAPPROXY_DATA_DIR`=path to store all mapproxy configs
 * `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
 * `ALLOW_LISTING`=Allows listing all config files in multi map mode  
 * `LOGGING`=Boolean value to indicate if you need to activate logging. Useful
