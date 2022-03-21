@@ -34,12 +34,17 @@ docker build -t kartoza/mapproxy .
 # Environment variables
 The image specifies a couple of environment variables
 
+* `MAPPROXY_DATA_DIR`=path to store configuration files when running single
+  app mode
+* `MULTI_MAPPROXY_DATA_DIR`=path to store configuration files when running
+  multi app mode
 * `PROCESSES`=number of processes to run uwsgi in. Only available
   when running the production version.
 * `THREADS`=maximum number of parallel threads to run production instance with. 
 * `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwgi
 * `MAPPROXY_DATA_DIR`=path to store all mapproxy configs
 * `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
+* `ALLOW_LISTING`=Allows listing all config files in multi map mode  
 * `LOGGING`=Boolean value to indicate if you need to activate logging. Useful
 when using uwsgi (not in multi-app mode)
 
@@ -65,13 +70,21 @@ docker run --name "mapproxy" -p 8080:8080 -d -t kartoza/mapproxy
 Typically, you will want to mount the mapproxy volume, otherwise you won't be
 able to edit the configs:
 
-```
+In single app mode
+```bash
 mkdir mapproxy
 docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/mapproxy:/mapproxy kartoza/mapproxy
 ```
 
+In multi mode app
+
+```bash
+mkdir multi_mapproxy
+docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/multi_mapproxy:/multi_mapproxy kartoza/mapproxy
+```
+
 The first time your run the container, mapproxy basic default configuration
-files will be written into ``./configuration``. You should read the mapproxy documentation
+files will be written into `/mapproxy` or `multi_mapproxy` volumes. You should read the mapproxy documentation
 on how to configure these files and create appropriate service definitions for 
 your WMS services. Then restart the container to activate your changes.
 
@@ -111,4 +124,4 @@ http://localhost/mapproxy/service/?
 
 Tim Sutton (tim@kartoza.com)
 Admire Nyakudya (admire@kartoza.com)
-January 2021
+March 2022

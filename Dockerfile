@@ -35,7 +35,9 @@ ENV \
     MAPPROXY_DATA_DIR=/mapproxy \
     MULTI_MAPPROXY=false \
     ALLOW_LISTING=True \
-    LOGGING=false
+    LOGGING=false \
+    MULTI_MAPPROXY_DATA_DIR=/multi_mapproxy
+
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
 ADD start.sh /start.sh
