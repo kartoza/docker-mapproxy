@@ -4,5 +4,8 @@ mapproxy
 configuration/cache_data
 configuration/city_cache
 configuration/app.py
+configuration/log.ini
+configuration/mapproxy.log
+configuration/source-requests.log
 city_cache/*.py
 .idea*
