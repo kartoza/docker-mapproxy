@@ -41,7 +41,7 @@ The image specifies a couple of environment variables
 * `PROCESSES`=number of processes to run uwsgi in. Only available
   when running the production version.
 * `THREADS`=maximum number of parallel threads to run production instance with. 
-* `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwgi
+* `PRODUCTION`=Boolean value to indicate if you need to run develop server or using uwsgi
 * `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
 * `ALLOW_LISTING`=Allows listing all config files in multi map mode  
 * `LOGGING`=Boolean value to indicate if you need to activate logging. Useful
