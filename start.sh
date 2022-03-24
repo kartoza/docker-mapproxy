@@ -20,17 +20,22 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
       fi
     }
 
-
     ###
     # Change  ownership to mapproxy user and mapproxy group
     ###
-    if [[ ! -f "${MAPPROXY_DATA_DIR}"/mapproxy.log ]];then
-        touch "${MAPPROXY_DATA_DIR}"/mapproxy.log
-    fi
-    if [[ ! -f "${MAPPROXY_DATA_DIR}"/source-requests.log ]];then
-        touch "${MAPPROXY_DATA_DIR}"/source-requests.log
-    fi
+
     mkdir -p "${MAPPROXY_DATA_DIR}" /settings "${MULTI_MAPPROXY_DATA_DIR}"
+    if [[ "${RECREATE_DATADIR}" =~ [Tt][Rr][Uu][Ee] ]]; then
+        rm -rf "${MULTI_MAPPROXY_DATA_DIR}"/* "${MAPPROXY_DATA_DIR}"/*
+    fi
+    if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
+        if [[ ! -f "${MAPPROXY_DATA_DIR}"/mapproxy.log ]];then
+            touch "${MAPPROXY_DATA_DIR}"/mapproxy.log
+        fi
+        if [[ ! -f "${MAPPROXY_DATA_DIR}"/source-requests.log ]];then
+            touch "${MAPPROXY_DATA_DIR}"/source-requests.log
+        fi
+    fi
     chown -R mapproxy:mapproxy "${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings /start.sh /run_develop_server.sh
 
     # Check if uwsgi configuration exists
@@ -46,7 +51,6 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
     fi
     # Create a default mapproxy config is one does not exist in /mapproxy
     base_config_generator "${MAPPROXY_DATA_DIR}"
-
     pushd "${MAPPROXY_DATA_DIR}" || exit
 
     mapproxy-util create -t wsgi-app -f "${MAPPROXY_DATA_DIR}"/mapproxy.yaml "${MAPPROXY_DATA_DIR}"/app.py
