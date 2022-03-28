@@ -14,6 +14,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
 from opentelemetry import trace
 
 from mapproxy.wsgiapp import make_wsgi_app
+from wsgicors import CORS
 import os
 
 # # uncomment the following lines for logging
@@ -25,6 +26,12 @@ fileConfig(r'/mapproxy/log.ini', {'here': os.path.dirname(__file__)})
 
 # create map proxy application
 application = make_wsgi_app(r'/mapproxy/mapproxy.yaml', reloader=True)
+
+# add cors support
+if(os.environ.get('CORS_ENABLED', 'false').lower() == 'true'):
+    allowed_headers = os.environ.get('CORS_ALLOWED_HEADERS')
+    allowed_origin = os.environ.get('CORS_ALLOWED_ORIGIN')
+    application = CORS(application, headers=allowed_headers, methods="GET,OPTIONS", origin=allowed_origin)
 
 # Get telemetry endpoint from env
 endpoint = os.environ.get('TELEMETRY_ENDPOINT', 'localhost:4317')
