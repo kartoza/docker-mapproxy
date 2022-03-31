@@ -19,9 +19,11 @@ services:
       - THREADS=10
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
-      - MULTI_MAPPROXY=false
-    volumes:
-      - ./configuration:/mapproxy
+      - MULTI_MAPPROXY=true
+      - ALLOW_LISTING=False
+      - LOGGING=true
+    ports:
+      - "8080"
     depends_on:
       - map
   nginx:
