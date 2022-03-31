@@ -20,10 +20,10 @@ services:
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
       - MULTI_MAPPROXY=true
-      - ALLOW_LISTING=False
+      - ALLOW_LISTING=True
       - LOGGING=true
-    ports:
-      - "8080"
+    volumes:
+      - ./configuration:/mapproxy
     depends_on:
       - map
   nginx:
