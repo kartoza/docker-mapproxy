@@ -51,6 +51,12 @@ services:
       fees: 'None'
   tms:
     use_grid_names: true
+  wmts:
+    restful: true
+    restful_template: '/{Layer}/{TileMatrixSet}/{TileMatrix}/{TileCol}/{TileRow}.{Format}'
+    kvp: true
+  kml:
+    use_grid_names: true
 
 layers:
   - name: Hillshade

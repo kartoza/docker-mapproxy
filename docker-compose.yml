@@ -15,7 +15,7 @@ services:
     image: kartoza/mapproxy
     environment:
       - PRODUCTION=true
-      - PROCESSES=4
+      - PROCESSES=8
       - THREADS=10
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
@@ -24,6 +24,7 @@ services:
       - LOGGING=true
     volumes:
       - ./configuration:/mapproxy
+      - ./configuration:/multi_mapproxy
     depends_on:
       - map
   nginx:
