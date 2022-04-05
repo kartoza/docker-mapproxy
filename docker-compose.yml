@@ -15,7 +15,7 @@ services:
     image: kartoza/mapproxy
     environment:
       - PRODUCTION=true
-      - PROCESSES=8
+      - PROCESSES=16
       - THREADS=10
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
@@ -39,6 +39,7 @@ services:
         max-file: '10'
     depends_on:
       - mapproxy
+      - map
     ports:
     - "80:80"
 
