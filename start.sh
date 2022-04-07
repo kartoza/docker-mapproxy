@@ -49,7 +49,7 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
     function uwisgi_config (){
        DATA_PATH=$1
        if [[ ! -f /settings/uwsgi.ini ]]; then
-          echo "/settings/uwsgi.ini doesn't exists"
+          echo -e "\e[32m No custom uwsgi.ini file, will setup using default one provided at https://github.com/kartoza/docker-mapproxy/blob/master/uwsgi.ini \033[0m"
           # If it doesn't exists, copy from /mapproxy directory if exists
           if [[ -f ${DATA_PATH}/uwsgi.ini ]]; then
             cp -f "${DATA_PATH}"/uwsgi.ini /settings/uwsgi.ini
@@ -65,14 +65,24 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
     base_config_generator "${CONFIG_DATA_PATH}"
     pushd "${CONFIG_DATA_PATH}" || exit
 
-    mapproxy-util create -t wsgi-app -f "${CONFIG_DATA_PATH}"/mapproxy.yaml "${CONFIG_DATA_PATH}"/app.py
-    rm "${CONFIG_DATA_PATH}"/full_example.yaml  "${CONFIG_DATA_PATH}"/full_seed_example.yaml
+    if [[ ! -f "${CONFIG_DATA_PATH}"/app.py ]];then
+        mapproxy-util create -t wsgi-app -f "${CONFIG_DATA_PATH}"/mapproxy.yaml "${CONFIG_DATA_PATH}"/app.py
+    fi
+    if [[ -f "${CONFIG_DATA_PATH}"/full_example.yaml ]];then
+        rm "${CONFIG_DATA_PATH}"/full_example.yaml 2> /dev/null || true
+    fi
+    if [[ "${CONFIG_DATA_PATH}"/full_seed_example.yaml ]];then
+        rm "${CONFIG_DATA_PATH}"/full_seed_example.yaml 2> /dev/null || true
+    fi
+
     # check if logging file exists
     if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
         if [[ -f /settings/log.ini ]];then
           cp /settings/log.ini "${CONFIG_DATA_PATH}"/log.ini
         else
-          mapproxy-util create -t log-ini "${CONFIG_DATA_PATH}"/log.ini
+            if [[ ! -f "${CONFIG_DATA_PATH}"/log.ini ]];then
+                mapproxy-util create -t log-ini "${CONFIG_DATA_PATH}"/log.ini
+            fi
         fi
         #TODO - Fix sed to replace all commands in one go
         sed -i 's/%(here)s/${CONFIG_DATA_PATH}/g' "${CONFIG_DATA_PATH}"/log.ini
