@@ -15,7 +15,8 @@ services:
     image: kartoza/mapproxy
     environment:
       - PRODUCTION=true
-      - PROCESSES=16
+      - PROCESSES=4
+      - CHEAPER=2
       - THREADS=10
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000

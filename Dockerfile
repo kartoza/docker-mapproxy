@@ -28,7 +28,8 @@ RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pypro
 EXPOSE 8080
 ENV \
     # Run
-    PROCESSES=16 \
+    CHEAPER=2 \
+    PROCESSES=6 \
     THREADS=10 \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
     PRODUCTION=true \
