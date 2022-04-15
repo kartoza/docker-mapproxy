@@ -1,8 +1,0 @@
-#Acquire::http { Proxy "http://192.168.0.108:3142"; };
-#Acquire::http { Proxy "http://192.168.0.104:3142"; };
-#Acquire::http { Proxy "http://192.168.2.3:3142"; };
-#Acquire::http { Proxy "http://192.168.2.162:3142"; };
-#Acquire::http { Proxy "http://192.168.2.9:3142"; };
-#Acquire::http { Proxy "http://192.168.0.108:3142"; };
-#Acquire::http { Proxy "http://192.168.1.13:3142"; };
-#Acquire::http { Proxy "http://172.17.42.1:3142"; };

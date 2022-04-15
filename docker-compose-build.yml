@@ -1,0 +1,29 @@
+version: '3.9'
+
+volumes:
+   multi_mapproxy:
+   mapproxy:
+
+services:
+
+   mapproxy:
+      image: kartoza/mapproxy
+      build:
+        context: .
+      volumes:
+        - mapproxy:/mapproxy
+        - multi_mapproxy:/multi_mapproxy
+      ports:
+        - "8080:8080"
+      restart: on-failure
+      environment:
+        - PRODUCTION=true
+        - PROCESSES=20
+        - CHEAPER=16
+        - THREADS=10
+        - MAPPROXY_USER_ID=1000
+        - MAPPROXY_GROUP_ID=1000
+        - MULTI_MAPPROXY=true
+        - ALLOW_LISTING=True
+        - LOGGING=true
+
