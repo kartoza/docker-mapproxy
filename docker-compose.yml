@@ -1,5 +1,9 @@
 version: '3.9'
 
+volumes:
+   multi_mapproxy:
+   mapproxy:
+
 services:
   map:
     image: 3liz/qgis-map-server:3.24
@@ -25,7 +29,7 @@ services:
       - LOGGING=true
     volumes:
       - ./configuration:/mapproxy
-      - ./configuration:/multi_mapproxy
+      - multi_mapproxy:/multi_mapproxy
     depends_on:
       - map
   nginx:

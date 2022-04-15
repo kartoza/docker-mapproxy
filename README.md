@@ -31,6 +31,10 @@ git clone git://github.com/kartoza/docker-mapproxy
 ```
 docker build -t kartoza/mapproxy .
 ```
+
+**Note:** We do not use tagged versions as we install the latest
+version of mapproxy.
+
 # Environment variables
 The image specifies a couple of environment variables
 
@@ -51,7 +55,7 @@ when using uwsgi (not in multi-app mode)
 
 # Mounting Configs
 
-When running in production you can specify any uwsgi parameters.
+if running in production you can specify any uwsgi parameters.
 
 You can mount the [uwsgi.ini](https://github.com/kartoza/docker-mapproxy/blob/master/uwsgi.ini) to
 a path inside the container thus overriding a lot of the uwsgi default settings.
@@ -93,19 +97,21 @@ The cached wms tiles will be written to ``./configuration/cache_data`` externall
 defined by the mapproxy.yaml.
 
 **Note** that the mapproxy containerised application will run as the user that
-owns the /mapproxy folder. The UID:GID of the process will be 1000:10001. If you serve existing ``./configuration`` folder, you need to set the folder permission with `chown -R 1000:10001 ./configuration` from this directory.
+owns the /mapproxy folder. The UID:GID of the process will be 1000:1000.
+If you are mounting existing config directory i.e.  `./configuration` folder,
+you need to set the folder permission with `chown -R 1000:1000 ./configuration` from this directory.
 
 # docker-compose
 You can set up the services using the docker-compose. The docker-compose sets up the QGIS server 
 container and links it to the mapproxy container and nginx for reverse proxy. 
 
-A index.html is provided in the web folder to preview the layers in mapproxy.
+An `index.html` is provided in the web folder to preview the layers in mapproxy.
 
 # Reverse proxy
 
 The mapproxy container can 'speaks' ``uwsgi`` protocol so you can also put nginx in front of it 
 to receive http request and translate it to uwsgi
-(try the ``nginx docker container``). However our sample configuration by default 
+(try the ``nginx docker container``). However, our sample configuration by default 
 make `uwsgi` uses `http` socket instead of `socket` parameter (uwsgi protocol). A sample configuration (via linked
 containers) that will forward traffic into the uwsgi container, adding the appropriate 
 headers as needed is provided via docker-compose
