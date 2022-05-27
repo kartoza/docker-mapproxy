@@ -17,10 +17,10 @@ RUN apt-get -y update && \
     zlib1g-dev \
     libfreetype6-dev \
     python3-virtualenv
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj && \
+RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd && \
     set -eux; \
 	apt-get update; \
-	apt-get install -y gosu; \
+	apt-get install -y gosu awscli; \
 	rm -rf /var/lib/apt/lists/*; \
 # verify that the binary works
 	gosu nobody true
