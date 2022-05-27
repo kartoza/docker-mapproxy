@@ -67,11 +67,14 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
 
     if [[ ! -f "${CONFIG_DATA_PATH}"/app.py ]];then
         mapproxy-util create -t wsgi-app -f "${CONFIG_DATA_PATH}"/mapproxy.yaml "${CONFIG_DATA_PATH}"/app.py
+    else
+        rm "${CONFIG_DATA_PATH}"/app.py
+        mapproxy-util create -t wsgi-app -f "${CONFIG_DATA_PATH}"/mapproxy.yaml "${CONFIG_DATA_PATH}"/app.py
     fi
     if [[ -f "${CONFIG_DATA_PATH}"/full_example.yaml ]];then
         rm "${CONFIG_DATA_PATH}"/full_example.yaml 2> /dev/null || true
     fi
-    if [[ "${CONFIG_DATA_PATH}"/full_seed_example.yaml ]];then
+    if [[ -f "${CONFIG_DATA_PATH}"/full_seed_example.yaml ]];then
         rm "${CONFIG_DATA_PATH}"/full_seed_example.yaml 2> /dev/null || true
     fi
 
