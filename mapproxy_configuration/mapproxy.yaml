@@ -84,7 +84,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: airports.mbtiles
+      filename: ./cache_data/airports.mbtiles
 
 
 
@@ -96,7 +96,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: file
-      directory: /mapproxy/cache_data/srtm_cache
+      directory: ./cache_data/srtm_cache
     format: custom_format
 
   hillshade_cache:
@@ -107,7 +107,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: hillshade.mbtiles
+      filename: ./cache_data/hillshade.mbtiles
 
 sources:
   hillshade_wms:
@@ -123,7 +123,7 @@ sources:
       version: 1.3.0
       featureinfo: True
     req:
-      url: http://map:8080/ows/?map=/web/project.qgs
+      url: http://map:8080/ows/?map=project.qgs
       layers: Hillshade
       transparent: true
     supported_formats: [png]
@@ -142,7 +142,7 @@ sources:
       version: 1.3.0
       featureinfo: True
     req:
-      url: http://map:8080/ows/?map=/web/project.qgs
+      url: http://map:8080/ows/?map=project.qgs
       layers: SRTM
       transparent: true
     supported_formats: [png]
@@ -161,7 +161,7 @@ sources:
       version: 1.3.0
       featureinfo: True
     req:
-      url: http://map:8080/ows/?map=/web/project.qgs
+      url: http://map:8080/ows/?map=project.qgs
       layers: Airports
       transparent: true
     supported_formats: [png]
