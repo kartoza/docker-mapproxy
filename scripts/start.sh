@@ -1,6 +1,6 @@
 #!/bin/bash
-
-if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
+source /scripts/env-data.sh
+if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]; then
 
     USER_ID=${MAPPROXY_USER_ID:-1000}
     GROUP_ID=${MAPPROXY_GROUP_ID:-1000}
@@ -19,6 +19,22 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
             mapproxy-util create -t base-config "${DATA_PATH}"
       fi
     }
+
+    # Function to setup S3 configs
+        function configure_s3_cache() {
+      cat > ${AWS_CONFIG_FILE} <<EOF
+[profile ${S3_DEFAULT_PROFILE}]
+region=${S3_DEFAULT_REGION}
+output=${S3_DEFAULT_OUTPUT}
+EOF
+
+  cat > ${AWS_SHARED_CREDENTIALS_FILE} <<EOF
+[profile ${S3_DEFAULT_PROFILE}]
+aws_access_key_id=${AWS_ACCESS_KEY_ID}
+aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+EOF
+    }
+
     if [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]] && [[ ${MULTI_MAPPROXY} =~ [Ff][Aa][Ll][Ss][Ee] ]]; then
         export CONFIG_DATA_PATH="${MAPPROXY_DATA_DIR}"
     elif [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]] && [[ ${MULTI_MAPPROXY} =~ [Tt][Rr][Uu][Ee] ]]; then
@@ -31,7 +47,7 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
     # Change  ownership to mapproxy user and mapproxy group
     ###
 
-    mkdir -p "${MAPPROXY_DATA_DIR}" /settings "${MULTI_MAPPROXY_DATA_DIR}"
+    mkdir -p "${MAPPROXY_DATA_DIR}" /settings "${MULTI_MAPPROXY_DATA_DIR}" /root/.aws
     if [[ "${RECREATE_DATADIR}" =~ [Tt][Rr][Uu][Ee] ]]; then
         rm -rf "${MULTI_MAPPROXY_DATA_DIR}"/* "${MAPPROXY_DATA_DIR}"/*
     fi
@@ -43,7 +59,12 @@ if [ "$1" = '/run_develop_server.sh' ] || [ "$1" = '/start.sh' ]; then
             touch "${CONFIG_DATA_PATH}"/source-requests.log
         fi
     fi
-    chown -R mapproxy:mapproxy "${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings /start.sh /run_develop_server.sh
+    # Generate S3 configurations
+    if [[ ${ENABLE_S3_CACHE} =~ [Tt][Rr][Uu][Ee] ]];then
+      export AWS_CONFIG_FILE AWS_SHARED_CREDENTIALS_FILE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY S3_DEFAULT_PROFILE S3_DEFAULT_REGION S3_DEFAULT_OUTPUT
+      configure_s3_cache
+    fi
+    chown -R mapproxy:mapproxy "${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings /scripts/ root/.aws
 
     # Check if uwsgi configuration exists
     function uwisgi_config (){
@@ -111,6 +132,7 @@ fileConfig(r'${CONFIG_DATA_PATH}/log.ini', {'here': os.path.dirname(__file__)})
       mv  /tmp/log.py  "${CONFIG_DATA_PATH}"/app.py
     fi
     }
+
 
     # Entrypoint logic to start the app
     if [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]] && [[ ${MULTI_MAPPROXY} =~ [Ff][Aa][Ll][Ss][Ee] ]]; then

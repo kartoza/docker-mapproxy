@@ -17,7 +17,8 @@ RUN apt-get -y update && \
     zlib1g-dev \
     libfreetype6-dev \
     python3-virtualenv
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd && \
+RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd \
+    requests riak==2.4.2 redis && \
     set -eux; \
 	apt-get update; \
 	apt-get install -y gosu awscli; \
@@ -26,26 +27,12 @@ RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pypro
 	gosu nobody true
 
 EXPOSE 8080
-ENV \
-    # Run
-    CHEAPER=2 \
-    PROCESSES=6 \
-    THREADS=10 \
-    # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
-    PRODUCTION=true \
-    MAPPROXY_DATA_DIR=/mapproxy \
-    MULTI_MAPPROXY=false \
-    ALLOW_LISTING=True \
-    LOGGING=false \
-    MULTI_MAPPROXY_DATA_DIR=/multi_mapproxy \
-    RECREATE_DATADIR=false
+
+ADD build_data/uwsgi.ini /settings/uwsgi.default.ini
+ADD scripts /scripts
+RUN chmod +x /scripts/*.sh
+ADD build_data/multi_mapproxy.py /multi_mapproxy.py
 
 
-ADD uwsgi.ini /settings/uwsgi.default.ini
-ADD start.sh /start.sh
-ADD run_develop_server.sh /run_develop_server.sh
-ADD multi_mapproxy.py /multi_mapproxy.py
-RUN chmod 0755 /start.sh /run_develop_server.sh
-
-ENTRYPOINT [ "/start.sh" ]
-CMD [ "/run_develop_server.sh" ]
+ENTRYPOINT [ "/scripts/start.sh" ]
+CMD [ "/scripts/run_develop_server.sh" ]
