@@ -60,11 +60,3 @@ fi
 if [ -z "${ENABLE_S3_CACHE}" ]; then
 	ENABLE_S3_CACHE=False
 fi
-
-
-
-
-
-
-
-
