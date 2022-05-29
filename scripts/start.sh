@@ -52,11 +52,11 @@ EOF
         rm -rf "${MULTI_MAPPROXY_DATA_DIR}"/* "${MAPPROXY_DATA_DIR}"/*
     fi
     if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
-        if [[ ! -f "${CONFIG_DATA_PATH}"/mapproxy.log ]];then
-            touch "${CONFIG_DATA_PATH}"/mapproxy.log
+        if [[ ! -f "${CONFIG_DATA_PATH}"/mapproxy_${HOSTNAME}.log ]];then
+            touch "${CONFIG_DATA_PATH}"/mapproxy_${HOSTNAME}.log
         fi
-        if [[ ! -f "${CONFIG_DATA_PATH}"/source-requests.log ]];then
-            touch "${CONFIG_DATA_PATH}"/source-requests.log
+        if [[ ! -f "${CONFIG_DATA_PATH}"/source-requests_${HOSTNAME}.log ]];then
+            touch "${CONFIG_DATA_PATH}"/source-requests_${HOSTNAME}.log
         fi
     fi
     # Generate S3 configurations
@@ -106,18 +106,20 @@ EOF
         else
             # Always create a new log.ini
             if [[ ! -f "${CONFIG_DATA_PATH}"/log.ini ]];then
-                mapproxy-util create -t log-ini --force "${CONFIG_DATA_PATH}"/log.ini
+                mapproxy-util create -t log-ini --force "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
             else
                 rm "${CONFIG_DATA_PATH}"/log.ini
-                mapproxy-util create -t log-ini --force "${CONFIG_DATA_PATH}"/log.ini
+                mapproxy-util create -t log-ini --force "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
             fi
         fi
         #TODO - Fix sed to replace all commands in one go
         # Add custom logic if it doesn't come from a user defined one
         if [[ ! -f /settings/log.ini ]];then
-          sed -i 's/%(here)s/${CONFIG_DATA_PATH}/g' "${CONFIG_DATA_PATH}"/log.ini
-          envsubst < "${CONFIG_DATA_PATH}"/log.ini > "${CONFIG_DATA_PATH}"/log.ini.bak
-          mv "${CONFIG_DATA_PATH}"/log.ini.bak "${CONFIG_DATA_PATH}"/log.ini
+          sed -i 's/%(here)s/${CONFIG_DATA_PATH}/g' "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
+          sed -i 's/mapproxy.log/mapproxy_${HOSTNAME}.log/g' "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
+          sed -i 's/source-requests.log/source-requests_${HOSTNAME}.log/g' "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
+          envsubst < "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini > "${CONFIG_DATA_PATH}"/log.ini.bak
+          mv "${CONFIG_DATA_PATH}"/log.ini.bak "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
         fi
     fi
 
@@ -133,7 +135,7 @@ EOF
       echo "
 from logging.config import fileConfig
 import os.path
-fileConfig(r'${CONFIG_DATA_PATH}/log.ini', {'here': os.path.dirname(__file__)})
+fileConfig(r'${CONFIG_DATA_PATH}/log_${HOSTNAME}.ini', {'here': os.path.dirname(__file__)})
       " > /tmp/log.py
       cat "${MAPPROXY_APP_DIR}"/app.py >> /tmp/log.py
       mv  /tmp/log.py  "${MAPPROXY_APP_DIR}"/app.py
