@@ -13,6 +13,9 @@ fi
 if [ -z "${PRODUCTION}" ]; then
 	PRODUCTION=true
 fi
+if [ -z "${MAPPROXY_APP_DIR}" ]; then
+	MAPPROXY_APP_DIR=/opt/mapproxy
+fi
 if [ -z "${MAPPROXY_DATA_DIR}" ]; then
 	MAPPROXY_DATA_DIR=/mapproxy
 fi
