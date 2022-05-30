@@ -16,23 +16,23 @@ RUN apt-get -y update && \
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
-    python3-virtualenv
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd \
-    requests riak==2.4.2 redis && \
-    set -eux; \
-	apt-get update; \
-	apt-get install -y gosu awscli; \
-	rm -rf /var/lib/apt/lists/*; \
+    python3-virtualenv \
+    gosu awscli; \
 # verify that the binary works
 	gosu nobody true
+RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd \
+    requests riak==2.4.2 redis
 
+# Cleanup resources
+RUN apt-get -y --purge autoremove  \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 EXPOSE 8080
 
 ADD build_data/uwsgi.ini /settings/uwsgi.default.ini
+ADD build_data/multi_mapproxy.py /multi_mapproxy.py
 ADD scripts /scripts
 RUN chmod +x /scripts/*.sh
-ADD build_data/multi_mapproxy.py /multi_mapproxy.py
-
 
 ENTRYPOINT [ "/scripts/start.sh" ]
 CMD [ "/scripts/run_develop_server.sh" ]
