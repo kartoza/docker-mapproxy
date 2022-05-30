@@ -72,7 +72,3 @@ fi
 if [ -z "${S3_BUCKET_LIST}" ]; then
 	S3_BUCKET_LIST="mapproxy"
 fi
-
-if [ -z "${ENABLE_S3_CACHE}" ]; then
-	ENABLE_S3_CACHE=False
-fi
