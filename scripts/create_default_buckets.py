@@ -37,6 +37,6 @@ def main():
 
 if __name__=="__main__":
     create_buckets = env['CREATE_DEFAULT_S3_BUCKETS']
-    if create_buckets == 'True':
+    if create_buckets.lower() == 'true':
         print("Creating default buckets")
         main()
