@@ -60,3 +60,19 @@ fi
 if [ -z "${ENABLE_S3_CACHE}" ]; then
 	ENABLE_S3_CACHE=False
 fi
+
+if [ -z "${CREATE_DEFAULT_S3_BUCKETS}" ]; then
+	CREATE_DEFAULT_S3_BUCKETS="False"
+fi
+
+if [ -z "${S3_BUCKET_ENDPOINT}" ]; then
+	S3_BUCKET_ENDPOINT="https://s3.${S3_DEFAULT_REGION}.amazonaws.com"
+fi
+
+if [ -z "${S3_BUCKET_LIST}" ]; then
+	S3_BUCKET_LIST="mapproxy"
+fi
+
+if [ -z "${ENABLE_S3_CACHE}" ]; then
+	ENABLE_S3_CACHE=False
+fi
