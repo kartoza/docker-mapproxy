@@ -62,6 +62,7 @@ EOF
     # Generate S3 configurations
     if [[ ${ENABLE_S3_CACHE} =~ [Tt][Rr][Uu][Ee] ]];then
       configure_s3_cache
+      python3 /scripts/create_default_buckets.py
     fi
     chown -R mapproxy:mapproxy "${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings /scripts/ root/.aws ${MAPPROXY_APP_DIR}
 
