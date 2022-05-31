@@ -1,9 +1,5 @@
 version: '3.9'
 
-volumes:
-   multi_mapproxy:
-   mapproxy:
-
 services:
   map:
     image: 3liz/qgis-map-server:3.24
@@ -14,7 +10,7 @@ services:
       - QGSRV_CACHE_SIZE=100
       - QGSRV_SERVER_TIMEOUT=300
     volumes:
-      - ./data:/web
+      - ./qgis_projects:/web
   mapproxy:
     image: kartoza/mapproxy
     environment:
@@ -28,8 +24,8 @@ services:
       - ALLOW_LISTING=True
       - LOGGING=true
     volumes:
-      - ./configuration:/mapproxy
-      - multi_mapproxy:/multi_mapproxy
+      - ./mapproxy_configuration:/mapproxy
+      - ./mapproxy_configuration:/multi_mapproxy
     depends_on:
       - map
   nginx:
