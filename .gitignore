@@ -1,8 +1,5 @@
 *.*~
 tilestore
 mapproxy_configuration/cache_data
-mapproxy_configuration/app.py
-mapproxy_configuration/log.ini
-mapproxy_configuration/mapproxy.log
-mapproxy_configuration/source-requests.log
+mapproxy_configuration/log_*
 .idea*

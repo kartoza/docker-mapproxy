@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  map:
+    image: 3liz/qgis-map-server:3.24
+    environment:
+      - QGSRV_SERVER_WORKERS=6
+      - QGSRV_LOGGING_LEVEL=DEBUG
+      - QGSRV_CACHE_ROOTDIR=/web
+      - QGSRV_CACHE_SIZE=100
+      - QGSRV_SERVER_TIMEOUT=300
+    volumes:
+      - ./qgis_projects:/web
+  minio:
+    image: quay.io/minio/minio
+    environment:
+      - MINIO_ROOT_USER=minio_admin
+      - MINIO_ROOT_PASSWORD=secure_minio_secret
+    entrypoint: /bin/bash
+    command: -c 'minio server /data --console-address ":9001"'
+    volumes:
+      - ./minio_data:/mapproxy
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+  mapproxy:
+    image: kartoza/mapproxy
+    environment:
+      - PRODUCTION=true
+      - PROCESSES=4
+      - CHEAPER=2
+      - THREADS=10
+      - MAPPROXY_USER_ID=1000
+      - MAPPROXY_GROUP_ID=1000
+      - MULTI_MAPPROXY=true
+      - ALLOW_LISTING=True
+      - LOGGING=true
+      - AWS_ACCESS_KEY_ID=minio_admin
+      - AWS_SECRET_ACCESS_KEY=secure_minio_secret
+      - ENABLE_S3_CACHE=true
+      - CREATE_DEFAULT_S3_BUCKETS=true
+      - AWS_S3_SIGNATURE_VERSION=s3v4
+      - S3_BUCKET_LIST=mapproxy,bucket2
+      - S3_BUCKET_ENDPOINT=http://minio:9000/
+    volumes:
+      - ./mapproxy_configuration:/mapproxy
+      - ./mapproxy_configuration:/multi_mapproxy
+    depends_on:
+      - map
+      - minio
+  nginx:
+    image: nginx
+    volumes:
+      - ./web:/web
+      - ./sites-enabled:/etc/nginx/conf.d:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: 200m
+        max-file: '10'
+    depends_on:
+      - mapproxy
+      - map
+    ports:
+      - "80:80"
