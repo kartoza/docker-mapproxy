@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapproxy Demo Service</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/leaflet.css"/>
+    <link rel="stylesheet" href="./css/leaflet.zoomdisplay.css"/>
+    <link rel="stylesheet" href="./css/leaflet.wmslegend.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            background: white;
+        }
+
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script src="./js/leaflet.js"></script>
+<script src="./js/leaflet.zoomdisplay.js"></script>
+<script src="./js/leaflet.wmslegend.js"></script>
+<link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="./css/Control.FullScreen.css"/>
+<script>
+
+
+    var map = L.map('map', {
+        center: [34.71, 17.97],
+        zoom: 4,
+        minZoom: 4,
+        maxZoom: 20,
+        maxBounds: [[-11.320837769222928,13.387481879430712],[41.02183656447146,76.7806739241933]],
+        fullscreenControl: true,
+        fullscreenControlOptions: {
+            position: 'topleft'
+        }
+    });
+
+
+    var base_map_0 = L.tileLayer('http://s.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: 'Data from <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; tiles &copy; <a href="http://carto.com/attributions">Carto</a>, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 22
+    });
+
+	base_map_0.addTo(map);
+
+	var base_map_1 = L.tileLayer('http://a.tile.stamen.com/terrain/{z}/{x}/{y}.png', {
+        attribution: 'Data from <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; tiles &copy; <a href="http://carto.com/attributions">Carto</a>, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 22
+    });
+
+	var base_map_2 = L.tileLayer.wms('', {});
+
+
+
+     var overlay_airports = L.tileLayer.wms('http://localhost/mapproxy/mapproxy-s3/service?', {
+        layers: 'airports',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+    });
+
+    map.addLayer(overlay_airports);
+    L.stamp(overlay_airports);
+
+    var overlay_hillshade = L.tileLayer.wms('http://localhost/mapproxy/mapproxy-s3/service?', {
+        layers: 'Hillshade',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+
+
+    });
+    map.addLayer(overlay_hillshade);
+    L.stamp(overlay_hillshade);
+
+    var overlay_srtm = L.tileLayer.wms('http://localhost/mapproxy/mapproxy-s3/service?', {
+        layers: 'SRTM',
+        format: 'image/png',
+        uppercase: true,
+        transparent: true,
+        continuousWorld: true,
+        opacity: 1.0
+
+    });
+    map.addLayer(overlay_srtm);
+    L.stamp(overlay_srtm);
+
+
+
+
+
+    var baseMaps = { 'Carto Positron': base_map_0,'Stamen Terrain': base_map_1, 'Empty Basemap': base_map_2};
+    var overlays = {"Hillshade":overlay_hillshade,
+                    "SRTM":overlay_srtm, "Airports":overlay_airports};
+    L.control.layers(baseMaps, overlays).addTo(map);
+
+</script>
+
+
+</body>
+</html>
+
+
+
+
