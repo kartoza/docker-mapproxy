@@ -1,4 +1,5 @@
 from os import environ as env
+import re
 import boto3, botocore
 
 def check_bucket(s3, bucket_name):
@@ -17,10 +18,7 @@ def check_bucket(s3, bucket_name):
 
 def main():
     buckets = env['S3_BUCKET_LIST']
-    buckets = buckets.split(',')  # comma separated
-    # buckets = buckets.split(' ')  # space separated
-    # import re
-    # re.split(r',| |;'  # multiple delimiters
+    buckets = re.split(r',| |;' buckets)
     end_point = env['S3_BUCKET_ENDPOINT']
 
     session = boto3.session.Session()
