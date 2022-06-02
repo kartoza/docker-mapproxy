@@ -1,7 +1,7 @@
 from os import environ as env
 import boto3, botocore
 
-def check_bucket(bucket_name):
+def check_bucket(s3, bucket_name):
     try:
         s3.head_bucket(Bucket=bucket_name)
         print(f"{bucket_name} available")
@@ -33,7 +33,7 @@ def main():
     )
 
     for i in buckets:
-        if not check_bucket(i):
+        if not check_bucket(s3, i):
             print(f"Creating {i}")
             s3.create_bucket(Bucket=i)
 
