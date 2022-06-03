@@ -151,7 +151,13 @@ fileConfig(r'${CONFIG_DATA_PATH}/log_${HOSTNAME}.ini', {'here': os.path.dirname(
         exec gosu mapproxy uwsgi --ini /settings/uwsgi.ini
     elif [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]] && [[ ${MULTI_MAPPROXY} =~ [Tt][Rr][Uu][Ee] ]]; then
         uwisgi_config "${CONFIG_DATA_PATH}"
-        export MULTI_MAPPROXY_DATA_DIR ALLOW_LISTING
+        export MULTI_MAPPROXY_DATA_DIR
+        # Allow listing env variable should always be title case.
+        if [[ "${ALLOW_LISTING}" =~ [Tt][Rr][Uu][Ee] ]]; then
+                  export ALLOW_LISTING=True
+              else
+                  export ALLOW_LISTING=False
+        fi
         envsubst < /multi_mapproxy.py > "${MAPPROXY_APP_DIR}"/app.py
         make_logs
         exec gosu mapproxy uwsgi --ini /settings/uwsgi.ini
