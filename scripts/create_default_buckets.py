@@ -18,7 +18,7 @@ def check_bucket(s3, bucket_name):
 
 def main():
     buckets = env['S3_BUCKET_LIST']
-    buckets = re.split(r',| |;' buckets)
+    buckets = re.split(r',| |;', buckets)
     end_point = env['S3_BUCKET_ENDPOINT']
 
     session = boto3.session.Session()
