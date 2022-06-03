@@ -27,7 +27,6 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          target: prod
           tags: ${{ secrets.DOCKERHUB_REPO }}/mapproxy:latest
           cache-from: type=gha,scope=prod
           cache-to: type=gha,scope=prod
