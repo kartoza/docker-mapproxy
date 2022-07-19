@@ -67,7 +67,7 @@ you most likely want to set this to `http://minio:9000/` or the URL of your exte
 
 if running in production you can specify any uwsgi parameters.
 
-You can mount the [uwsgi.ini](https://github.com/kartoza/docker-mapproxy/blob/master/uwsgi.ini) to
+You can mount the [uwsgi.ini](https://github.com/kartoza/docker-mapproxy/blob/master/build_data/uwsgi.ini) to
 a path inside the container thus overriding a lot of the uwsgi default settings.
 
 ```bash
@@ -119,7 +119,7 @@ An `index.html` is provided in the web folder to preview the layers in mapproxy.
 
 # Reverse proxy
 
-The mapproxy container can 'speaks' ``uwsgi`` protocol so you can also put nginx in front of it
+The mapproxy container 'speaks' ``uwsgi`` protocol so you can also put nginx in front of it
 to receive http request and translate it to uwsgi
 (try the ``nginx docker container``). However, our sample configuration by default
 make `uwsgi` uses `http` socket instead of `socket` parameter (uwsgi protocol). A sample configuration (via linked
