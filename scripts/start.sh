@@ -70,7 +70,7 @@ EOF
     function uwisgi_config (){
        DATA_PATH=$1
        if [[ ! -f /settings/uwsgi.ini ]]; then
-          echo -e "\e[32m No custom uwsgi.ini file, setup using default one from  \033[0m \e[1;31m https://github.com/kartoza/docker-mapproxy/blob/master/uwsgi.ini \033[0m"
+          echo -e "\e[32m No custom uwsgi.ini file, setup using default one from  \033[0m \e[1;31m https://github.com/kartoza/docker-mapproxy/blob/master/build_data/uwsgi.ini \033[0m"
           # If it doesn't exists, copy from /mapproxy directory if exists
           if [[ -f ${DATA_PATH}/uwsgi.ini ]]; then
             cp -f "${DATA_PATH}"/uwsgi.ini /settings/uwsgi.ini
