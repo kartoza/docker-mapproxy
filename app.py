@@ -22,6 +22,8 @@ import os
 from logging.config import fileConfig
 import os.path
 
+from authFilter import AuthFilter
+
 fileConfig(r'/mapproxy/log.ini', {'here': os.path.dirname(__file__)})
 
 # create map proxy application
@@ -35,12 +37,15 @@ if(os.environ.get('CORS_ENABLED', 'false').lower() == 'true'):
             return start_response(status, filtered_headers, exc_info)
         return map_proxy(environ, start_response_override)
 
-
     allowed_headers = os.environ.get('CORS_ALLOWED_HEADERS')
     allowed_origin = os.environ.get('CORS_ALLOWED_ORIGIN')
     application = CORS(corsOverrideMiddleware, headers=allowed_headers, methods="GET,OPTIONS", origin=allowed_origin)
 else:
     application = map_proxy
+
+# add auth middleware
+if(os.environ.get('AUTH_ENABLED', 'false').lower() == 'true'):
+    application = AuthFilter(application,os.environ.get('AUTH_VALID_DOMAIN'),os.environ.get('AUTH_HEADER_NAME'),os.environ.get('AUTH_QUERY_NAME'))
 
 # Get telemetry endpoint from env
 endpoint = os.environ.get('TELEMETRY_ENDPOINT', 'localhost:4317')

@@ -39,6 +39,7 @@ ADD start.sh /start.sh
 RUN chmod 0755 /start.sh
 RUN mkdir -p /mapproxy /settings
 ADD log.ini /mapproxy/log.ini
+ADD authFilter.py /mapproxy/authFilter.py
 ADD app.py /mapproxy/app.py
 
 RUN chgrp -R 0 /mapproxy /settings /start.sh && \
