@@ -43,21 +43,21 @@ EOF
         export CONFIG_DATA_PATH="${MAPPROXY_DATA_DIR}"
     fi
 
-
-
+    # Create directories
     mkdir -p "${MAPPROXY_DATA_DIR}" /settings "${MULTI_MAPPROXY_DATA_DIR}" /root/.aws ${MAPPROXY_APP_DIR} "${SAMPLE_CONFIG_DIR}"
+    # For development purposes
     if [[ "${RECREATE_DATADIR}" =~ [Tt][Rr][Uu][Ee] ]]; then
         rm -rf "${MULTI_MAPPROXY_DATA_DIR}"/* "${MAPPROXY_DATA_DIR}"/*
     fi
+    # Setup logging and cleanup older files
     if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
-
         if [[ ! -f "${CONFIG_DATA_PATH}"/mapproxy_${HOSTNAME}.log ]];then
             touch "${CONFIG_DATA_PATH}"/mapproxy_${HOSTNAME}.log
         fi
         if [[ ! -f "${CONFIG_DATA_PATH}"/source-requests_${HOSTNAME}.log ]];then
             touch "${CONFIG_DATA_PATH}"/source-requests_${HOSTNAME}.log
         fi
-        # Cleanup log files
+        # Cleanup log mapproxy log files
         pushd "${CONFIG_DATA_PATH}" || exit
         proxy_count=`ls -1 mapproxy_*.log 2>/dev/null | wc -l`
         if [[ $proxy_count != 0 ]];then
@@ -68,7 +68,7 @@ EOF
           done
         fi 
 
-        # Cleanup request file
+        # Cleanup log files for requests
         source_count=`ls -1 source-requests_*.log 2>/dev/null | wc -l`
         if [[ $source_count != 0 ]];then
           for X in source-requests_*.log; do
@@ -106,10 +106,10 @@ EOF
     }
 
 
-    # Create a default mapproxy config is one does not exist in /mapproxy or /multimapproxy
+    # Create a default mapproxy config, useful for testing and creating app.py
     base_config_generator
 
-
+    # Create app.py for loading app
     if [[ ! -f "${MAPPROXY_APP_DIR}"/app.py ]];then
         mapproxy-util create -t wsgi-app -f "${SAMPLE_CONFIG_DIR}"/mapproxy.yaml "${MAPPROXY_APP_DIR}"/app.py
     else
@@ -117,7 +117,7 @@ EOF
         mapproxy-util create -t wsgi-app -f "${SAMPLE_CONFIG_DIR}"/mapproxy.yaml "${MAPPROXY_APP_DIR}"/app.py
     fi
 
-    # Base files
+    # Check if /maproxy or /multi_mapproxy contains configs otherwise copy the basic ones
     if [[ $(grep -rlv "layers" "${CONFIG_DATA_PATH}"/*.y*) ]];then
       if [[ "${CONFIG_DATA_PATH}" == '/mapproxy' ]] && [[ ! -f "${CONFIG_DATA_PATH}"/mapproxy.yaml ]];then
         echo "Check if /mapproxy contains proper files"
@@ -127,6 +127,7 @@ EOF
       cp -r "${SAMPLE_CONFIG_DIR}"/mapproxy.yaml "${CONFIG_DATA_PATH}"
     fi
 
+    # For testing mapproxy configurations
     if [[ "${SAMPLE_CONFIG}" =~ [Tt][Rr][Uu][Ee] ]];then
       cp -r "${SAMPLE_CONFIG_DIR}"/* "${CONFIG_DATA_PATH}"
     fi
@@ -167,7 +168,7 @@ EOF
         fi
     fi
 
-    # Add logic to reload the app file
+    # Add logic to reload the app file usful in single mode only. Multi mapproxy auto reloads
 
     RELOAD_LOCKFILE="/settings/.app.lock"
     if [[ ! -f ${RELOAD_LOCKFILE} ]];then
@@ -193,7 +194,7 @@ fileConfig(r'${CONFIG_DATA_PATH}/log_${HOSTNAME}.ini', {'here': os.path.dirname(
         uwisgi_config "${CONFIG_DATA_PATH}"
         make_logs
         ###
-        # Change  ownership to mapproxy user and mapproxy group
+        # Change  ownership to mapproxy user and mapproxy group / Need to be done last
         ###
         chown -R mapproxy:mapproxy "${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings \
          /scripts/ /root/.aws ${MAPPROXY_APP_DIR} "${SAMPLE_CONFIG_DIR}"
