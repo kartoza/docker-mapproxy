@@ -30,9 +30,12 @@ services:
       - map
   nginx:
     image: nginx
+    environment:
+      - NGINX_HOST=mapproxy
     volumes:
       - ./web:/web
       - ./sites-enabled:/etc/nginx/conf.d:ro
+      - ./web/nginx_conf.sh:/docker-entrypoint.d/nginx_conf.sh
     logging:
       driver: json-file
       options:

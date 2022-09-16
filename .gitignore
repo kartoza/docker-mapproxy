@@ -8,3 +8,4 @@ minio_data/**
 !minio_data/
 !minio_data/.gitkeep
 .idea*
+web/index.html
