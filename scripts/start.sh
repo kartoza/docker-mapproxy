@@ -118,7 +118,7 @@ EOF
     fi
 
     # Check if /maproxy or /multi_mapproxy contains configs otherwise copy the basic ones
-    if [[ $(grep -rlv "layers" "${CONFIG_DATA_PATH}"/*.y*) ]];then
+    if [[ $(grep -rlv "layers" "${CONFIG_DATA_PATH}"/*.y* 2>/dev/null) ]];then
       if [[ "${CONFIG_DATA_PATH}" == '/mapproxy' ]] && [[ ! -f "${CONFIG_DATA_PATH}"/mapproxy.yaml ]];then
         echo "Check if /mapproxy contains proper files"
         cp -r "${SAMPLE_CONFIG_DIR}"/mapproxy.yaml "${CONFIG_DATA_PATH}"

@@ -174,7 +174,6 @@ globals:
     # where to store lockfiles for tile creation
     tile_lock_dir: "./cache_data/tile_locks"
     s3:
-      directory_layout: reverse_tms
       endpoint_url: http://minio:9000/
       bucket_name: mapproxy
       region_name: us-west-2
