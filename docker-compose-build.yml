@@ -10,6 +10,8 @@ services:
       image: kartoza/mapproxy
       build:
         context: .
+        args:
+          MAPPROXY_VERSION: ''
       volumes:
         - mapproxy:/mapproxy
         - multi_mapproxy:/multi_mapproxy

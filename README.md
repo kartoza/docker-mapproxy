@@ -1,3 +1,18 @@
+# Table of Contents
+* [Mapproxy Dockerfile](#mapproxy-dockerfile)
+   * [Getting the image](#getting-the-image)
+       * [Trusted builds](#trusted-builds)
+       * [Local Builds](#local-builds)
+   * [Environment variables](#environment-variables)
+   * [Mounting Configs](#mounting-configs)
+   * [Running Mapproxy](#running-mapproxy)
+       * [Docker run commands](#docker-run-commands)
+       * [docker-compose](#docker-compose)
+           * [Reverse proxy](#reverse-proxy)
+           * [S3 storage backend](#s3-storage-backend)
+   * [Support](#support)
+   * [Credits](#credits)
+
 # Mapproxy Dockerfile
 
 This will build a [docker](http://www.docker.com/) image that runs [mapproxy
@@ -7,6 +22,7 @@ This will build a [docker](http://www.docker.com/) image that runs [mapproxy
 
 There are various ways to get the image onto your system:
 
+### Trusted builds
 
 The preferred way (but using most bandwidth for the initial image) is to
 get our docker trusted build like this:
@@ -16,13 +32,15 @@ get our docker trusted build like this:
 docker pull kartoza/mapproxy
 ```
 
+### Local Builds
+
 To build the image yourself do:
 
 ```
 docker build -t kartoza/mapproxy git://github.com/kartoza/docker-mapproxy
 ```
 
-To build  using a local url instead of directly from github.
+To build  using a local url instead of directly from GitHub.
 
 ```
 git clone git://github.com/kartoza/docker-mapproxy
@@ -35,7 +53,16 @@ docker build -t kartoza/mapproxy .
 **Note:** We do not use tagged versions as we install the latest
 version of mapproxy.
 
-# Environment variables
+To build a specific version
+
+You can use the build arg `MAPPROXY_VERSION: '==1.15.1'` and substitute this in
+the `docker-compose-build.yml` then 
+
+```bash
+docker compose -f docker-compose-build.yml build
+```
+
+## Environment variables
 The image specifies a couple of environment variables
 
 * `MAPPROXY_DATA_DIR`=path to store configuration files when running single
@@ -59,11 +86,11 @@ when using uwsgi (not in multi-app mode)
 the container starts. If MinIO starts up with the MapProxy container, it will not have a bucket available by
 default, so S3 based caching will not work until a bucket is created. The default value is false.
 * `S3_BUCKET_LIST`=A list of bucket names to check for on the S3 endpoint, and create if they are not available.
-Supports space, comma, and semi-colon separated values. Default value is `mapproxy`.
+Supports space, comma, and semicolon separated values. Default value is `mapproxy`.
 * `S3_BUCKET_ENDPOINT`=The endpoint for your S3 service. Unless you are using S3 from AWS directly,
 you most likely want to set this to `http://minio:9000/` or the URL of your external S3 service.
 
-# Mounting Configs
+## Mounting Configs
 
 if running in production you can specify any uwsgi parameters.
 
@@ -74,7 +101,11 @@ a path inside the container thus overriding a lot of the uwsgi default settings.
 -v /data/uwsgi.ini:/settings/uwsgi.ini
 ```
 
-# Run
+## Running Mapproxy
+
+You can run mapproxy either using docker run command or using the docker-compose.
+
+### Docker run commands
 
 To run a mapproxy container do:
 
@@ -111,22 +142,23 @@ owns the /mapproxy folder. The UID:GID of the process will be 1000:1000.
 If you are mounting existing config directory i.e.  `./configuration` folder,
 you need to set the folder permission with `chown -R 1000:1000 ./configuration` from this directory.
 
-# docker-compose
+### docker-compose
 You can set up the services using the docker-compose. The docker-compose sets up the QGIS server
 container and links it to the mapproxy container and nginx for reverse proxy.
 
 An `index.html` is provided in the web folder to preview the layers in mapproxy.
 
-# Reverse proxy
+#### Reverse proxy
 
-The mapproxy container 'speaks' ``uwsgi`` protocol so you can also put nginx in front of it
+The mapproxy container 'speaks' ``uwsgi`` protocol, so you can also put nginx in front of it
 to receive http request and translate it to uwsgi
 (try the ``nginx docker container``). However, our sample configuration by default
 make `uwsgi` uses `http` socket instead of `socket` parameter (uwsgi protocol). A sample configuration (via linked
 containers) that will forward traffic into the uwsgi container, adding the appropriate
 headers as needed is provided via docker-compose
 
-Take a look at the docker-compose to look at linking two or more containers
+Take a look at the [docker-compose](https://github.com/kartoza/docker-mapproxy/blob/develop/docker-compose.yml) or [docker-compose-s3](https://github.com/kartoza/docker-mapproxy/blob/develop/docker-compose-s3.yml) 
+to look at linking two or more containers
 
 Once the service is up and running you can connect to the default demo
 mapproxy service by pointing QGIS' WMS client to the mapproxy service.
@@ -137,7 +169,7 @@ In the example below the nginx container is running on
 http://localhost/mapproxy/service/?
 ```
 
-# S3 storage backend
+#### S3 storage backend
 
 MapProxy supports the S3 storage backend for data caching. This provides a number of benefits, including the ability to decouple MapProxy and more readily scale your solution with multiple instances of MapProxy sharing the same storage backend without having to concern yourself with io locks or access collisions.
 
@@ -147,7 +179,7 @@ We provide an example implementation with `mapproxy-s3.yaml`, which is used in t
 docker compose -f ${pwd}docker-compose-s3.yml up -d
 ```
 
-Then review the example service at `http://localhost/s3sample.html`. Ensure that `minio_admin` and `secure_minio_secret` are stored and used as environment variables in production deployments.
+Then review the example service at `http://localhost/`. Ensure that `minio_admin` and `secure_minio_secret` are stored and used as environment variables in production deployments.
 
 This implementation mounts [MinIO](https://min.io/) - an S3 Compatible container service - as a storage backend for MapProxy
 
@@ -157,8 +189,12 @@ Note that the MinIO service does not support subpaths or routes on the web serve
 
 You can use this methodology to serve as a proxy for other storage solutions, for example, using MinIO as a [proxy for Microsoft Azure Blob Storage](https://cloudblogs.microsoft.com/opensource/2017/11/09/s3cmd-amazon-s3-compatible-apps-azure-storage/).
 
------------
+## Support
 
+If you require more substantial assistance from [kartoza](https://kartoza.com)  (because our work and interaction on docker-mapproxy is pro bono),
+please consider taking out a [Support Level Agreeement](https://kartoza.com/en/shop/product/support)
+
+## Credits
 Tim Sutton (tim@kartoza.com)
 Admire Nyakudya (admire@kartoza.com)
-March 2022
+September 2022
