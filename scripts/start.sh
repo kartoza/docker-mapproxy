@@ -1,4 +1,6 @@
 #!/bin/bash
+
+figlet -t "Kartoza Docker MapProxy"
 source /scripts/env-data.sh
 if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]; then
 

@@ -18,6 +18,7 @@ RUN apt-get -y update && \
     zlib1g-dev \
     libfreetype6-dev \
     python3-virtualenv \
+    figlet \
     gosu awscli; \
 # verify that the binary works
 	gosu nobody true
@@ -36,6 +37,8 @@ ADD build_data/uwsgi.ini /settings/uwsgi.default.ini
 ADD build_data/multi_mapproxy.py /multi_mapproxy.py
 ADD scripts /scripts
 RUN chmod +x /scripts/*.sh
+
+RUN echo 'figlet -t "Kartoza Docker MapProxy"' >> ~/.bashrc
 
 ENTRYPOINT [ "/scripts/start.sh" ]
 CMD [ "/scripts/run_develop_server.sh" ]
