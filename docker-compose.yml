@@ -32,6 +32,7 @@ services:
     image: nginx
     environment:
       - NGINX_HOST=mapproxy
+      - MULTI_MAPPROXY=true
     volumes:
       - ./web:/web
       - ./sites-enabled:/etc/nginx/conf.d:ro
