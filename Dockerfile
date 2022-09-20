@@ -22,8 +22,8 @@ RUN apt-get -y update && \
     gosu awscli; \
 # verify that the binary works
 	gosu nobody true
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy${MAPPROXY_VERSION} uwsgi pyproj boto3 s3cmd \
-    requests riak==2.4.2 redis
+RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy uwsgi pyproj boto3 s3cmd \
+    requests riak==2.4.2 redis numpy
 
 RUN ln -s /usr/lib/libgdal.a /usr/lib/liblibgdal.a
 

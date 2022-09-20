@@ -34,9 +34,6 @@ fi
 if [ -z "${RECREATE_DATADIR}" ]; then
 	RECREATE_DATADIR=false
 fi
-if [ -z "${SAMPLE_CONFIG}" ]; then
-	SAMPLE_CONFIG="False"
-fi
 if [ -z "${AWS_ACCESS_KEY_ID}" ]; then
 	AWS_ACCESS_KEY_ID=
 fi
