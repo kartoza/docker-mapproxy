@@ -10,7 +10,7 @@ class AuthFilter(object):
     """
     def __init__(self, app,validDomain,autHeaderName = None, authQueryName = 'token'):
         self.app = app
-        self.autHeaderName = autHeaderName.upper() if (autHeaderName != None) else None
+        self.autHeaderName = autHeaderName.upper().replace('-', '_') if (autHeaderName != None) else None
         self.upperAuthQueryName = authQueryName.upper() if (authQueryName != None) else None
         self.lowerAuthQueryName = authQueryName.lower() if (authQueryName != None) else None
         self.validDomain = validDomain
