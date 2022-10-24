@@ -1,0 +1,10 @@
+{{- if and .Values.mapproxy.ingress.tls.enabled .Values.mapproxy.ingress.enabled (not .Values.mapproxy.ingress.tls.useExternal) -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ingress-tls-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ .Files.Get "config/cert.pem" | b64enc }}
+  tls.key: {{ .Files.Get "config/key.pem" | b64enc }}
+{{- end }}

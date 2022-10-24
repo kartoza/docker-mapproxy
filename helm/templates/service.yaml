@@ -1,0 +1,32 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "mapproxy.name" . -}}
+{{- $cloudProviderFlavor := include "mapproxy.cloudProviderFlavor" . -}}
+{{- if .Values.mapproxy.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $releaseName }}-{{ $chartName }}
+  labels:
+    app: {{ $chartName }}
+    component: {{ $chartName }}
+    environment: {{ include "mapproxy.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "mapproxy.labels" . | nindent 4 }}
+spec:
+  {{- if eq $cloudProviderFlavor "minikube" }}
+  type: NodePort
+  {{- end }}
+  ports:
+    - port: {{ .Values.mapproxy.uwsgi.httpSocket }}
+      targetPort: {{ .Values.mapproxy.uwsgi.httpSocket }}
+      protocol: TCP
+      name: http
+      {{- if eq $cloudProviderFlavor "minikube" }}
+      nodePort: {{ .Values.mapproxy.nodePort }}
+      {{- end }}
+  selector:
+    app: {{ $chartName }}
+    release: {{ $releaseName }}
+    run: {{ $releaseName }}-{{ $chartName }}
+    {{- include "mapproxy.selectorLabels" . | nindent 4 }}
+{{- end }}

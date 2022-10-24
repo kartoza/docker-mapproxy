@@ -1,0 +1,270 @@
+global:
+  cloudProvider:
+    dockerRegistryUrl: my-registry-url.io
+    imagePullSecretName: 'my-registry-secret'
+    flavor: openshift
+  tracing:
+    enabled: false
+    url: http://localhost:55681/v1/trace
+  metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
+  environment: {}
+  authentication:
+    jwtPublicKeySecretName: map-colonies-jwks
+
+authentication:
+  ca:
+    enabled: false
+    useExternal: false
+    externalSecretName: ""
+  ssl:
+    enabled: false
+    useExternal: false
+    externalSecretName: ""
+  
+opa:
+  image: openpolicyagent/opa
+  imageTag: 0.29.4-envoy-3
+  port: 9191
+  enableLogging: false
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+envoy:
+  image: envoyproxy/envoy
+  imageTag: v1.20.7
+  port: 8000
+  maxRequestBytes: 8192
+  requestedDomain: raster
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+rasterCommon:
+  ca:
+    secretName: ''
+    path: '/usr/local/share/ca-certificates'
+    key: 'ca.crt'
+  authentication:
+    opa:
+      enabled: false
+      customHeaderName: ""
+  db:
+    host: "localhost"
+    name: "raster"
+    port: 5432
+    sslEnabled: false
+    rejectUnauthorized: false
+    secrets:
+      useExternal: false
+      externalSecretName: ''
+  storage:
+    tilesStorageProvider: 'FS'
+    mapproxyConfigProvider: db
+    fs:
+      internalPvc:
+        enabled: true
+        name: internal-pvc
+        tilesSubPath: tiles
+    s3:
+      enabled: false
+      endpointUrl: 'http://localhost:9000'
+      tilesBucket: 'raster'
+      forcePathStyle: true
+      sslEnabled: false
+      virtualHosting: false
+      awsHttps: false
+      secretName: raster-config-s3-secret
+
+environment: development
+initialDelaySeconds: 60
+splunkIndex: ""
+resetOnConfigChange: true
+imagePullPolicy: Always
+
+cloudProvider:
+  dockerRegistryUrl: my-registry-url.io
+  imagePullSecretName: 'my-registry-secret'
+  flavor: openshift
+
+env:
+  tracing:
+    enabled: false
+    url: http://localhost:55681/v1/trace
+  metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
+
+mapproxy:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: mapproxy
+    tag: 'latest'
+  db:
+    nameOverride:
+    schema: MapproxyConfig
+  port: 80
+  targetPort: 8080
+  nodePort: 30000
+  uwsgi:
+    socket: 3031
+    httpSocket: 8080
+    processes: 6
+    threads: 10
+  env:
+    cors:
+      enabled: true
+      allowedOrigin: '*'
+      allowedHeaders: ''
+    authentication:
+      WMS:
+        enabled: true
+        requiredDomain: raster_wms
+      token:
+        queryName: token
+        headerNameOverride: #will use "rasterCommon.authentication.opa.customHeaderName" if not specified
+    ssl: # external paths
+      CA_DIR: /opt/certs/ca/
+      KEY_DIR: /opt/certs/key/
+      CERT_DIR: /opt/certs/cert/
+      CA_FILE_LOCATION: /opt/certs/ca/ca.pem
+      KEY_FILE_LOCATION: /opt/certs/key/key.pem
+      CERT_FILE_LOCATION: /opt/certs/cert/cert.pem
+    openApiFilePath: ./openapi3.yaml
+    requestsLogLevel: WARNING
+    logLevel: WARNING
+    logPrettyPrintEnabled: false
+    responseCompressionEnabled: true
+    requestPayloadLimit: 1mb
+  route:
+    enabled: true
+    host: 
+    path: /api/raster/v1
+    https: true
+    useCert: false
+    timeout:
+      enabled: false # defaults to 30s by openshift
+      duration: 60s # supported units (us, ms, s, m, h, d)
+  ingress:
+    enabled: false
+    type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes'
+    path: /api/raster/v1
+    host: 'localhost'
+    tls: 
+      enabled: true
+      useExternal: ''
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+initContainer:
+  image:
+    repository: mapproxinator
+    tag: 'latest'
+  env:
+    logLevel: warn
+    ssl:
+      CA_DIR: /opt/certs/ca/
+      KEY_DIR: /opt/certs/key/
+      CERT_DIR: /opt/certs/cert/
+      CA_FILE_LOCATION: /opt/certs/ca/ca.pem
+      KEY_FILE_LOCATION: /opt/certs/key/key.pem
+      CERT_FILE_LOCATION: /opt/certs/cert/cert.pem
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+nginx:
+  enabled: true
+  pvc:
+    storage: 50Mi
+    accessModes: ReadWriteOnce
+  cache:
+    enable: true
+    cachePath: /cache
+    levels: "1:2" # levels sets up a two‑level directory hierarchy under
+    keysZone: mapproxy_cache
+    keysZoneSize: 10m # 10m is about 80,000 keys
+    maxSize: 900m # physical memory
+    inactive: 60m
+    useTempPath: "off"
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: 'latest' 
+  port: 8080
+  internalServicePort: 80
+  targetPort: 8080
+  nodePort: 30001
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+mapproxinator:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: mapproxinator
+    tag: 'latest'
+  port: 80
+  targetPort: 8081
+  nodePort: 30002
+  env:
+    logLevel: warn
+    poll:
+      timeout:
+        frequencyMS: 5000
+        readinessKillMaxSeconds: 300
+        requestsKillSeconds: 5
+        afterUpdateDelaySeconds: 0.5
+    ssl: # external paths
+      CA_DIR: /opt/certs/ca/
+      KEY_DIR: /opt/certs/key/
+      CERT_DIR: /opt/certs/cert/
+      CA_FILE_LOCATION: /opt/certs/ca/ca.pem
+      KEY_FILE_LOCATION: /opt/certs/key/key.pem
+      CERT_FILE_LOCATION: /opt/certs/cert/cert.pem
+    logPrettyPrintEnabled: false
+    responseCompressionEnabled: true
+    requestPayloadLimit: 1mb
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi

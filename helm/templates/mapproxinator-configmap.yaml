@@ -1,0 +1,32 @@
+{{- if .Values.mapproxinator.enabled -}}
+{{- $chartName := include "mapproxy.name" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ $chartName }}-mapproxinator-configmap
+  labels:
+    app: {{ .Release.Name }}-{{ $chartName }}
+    component: mapproxinator-configmap
+    environment: {{ .Values.environment }}
+    release: {{ .Release.Name }}
+data:
+  LOG_LEVEL: {{ .Values.mapproxinator.env.logLevel | quote }}
+  SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}
+  CONFIG_PROVIDER: {{ .Values.rasterCommon.storage.mapproxyConfigProvider | quote }}
+  POLL_TIMEOUT_FREQUENCY_MS: {{ .Values.mapproxinator.env.poll.timeout.frequencyMS | quote }}
+  POLL_TIMEOUT_READINESS_KILL_MAX_RND_SECONDS: {{ .Values.mapproxinator.env.poll.timeout.readinessKillMaxSeconds | quote }}
+  POLL_TIMEOUT_REQUESTS_KILL_SECONDS: {{ .Values.mapproxinator.env.poll.timeout.requestsKillSeconds | quote }}
+  POLL_TIMEOUT_AFTER_UPDATE_DELAY_SECONDS: {{ .Values.mapproxinator.env.poll.timeout.afterUpdateDelaySeconds | quote }}
+  S3_ENDPOINT_URL: {{ .Values.rasterCommon.storage.s3.endpointUrl | quote }}
+  S3_BUCKET: {{ .Values.rasterCommon.storage.s3.tilesBucket | quote }}
+  S3_SSL_ENABLED: {{ .Values.rasterCommon.storage.s3.sslEnabled | quote }}
+  DB_HOST: {{ .Values.rasterCommon.db.host | quote }}
+  DB_NAME: {{ .Values.rasterCommon.db.name | quote }}
+  DB_SCHEMA: {{ .Values.mapproxy.db.schema | quote }}
+  DB_PORT: {{ .Values.rasterCommon.db.port | quote }}
+  DB_SSL_ENABLE: {{ .Values.rasterCommon.db.sslEnabled | quote }}
+  DB_SSL_REJECT_UNAUTHORIZED: {{ .Values.rasterCommon.db.rejectUnauthorized | quote }}
+  DB_SSL_PATH_CA: {{ .Values.mapproxinator.env.ssl.CA_FILE_LOCATION }}
+  DB_SSL_PATH_KEY: {{ .Values.mapproxinator.env.ssl.KEY_FILE_LOCATION }}
+  DB_SSL_PATH_CERT: {{ .Values.mapproxinator.env.ssl.CERT_FILE_LOCATION }}
+{{- end }}
