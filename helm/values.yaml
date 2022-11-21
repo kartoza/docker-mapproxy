@@ -202,17 +202,18 @@ initContainer:
 
 nginx:
   enabled: true
-  pvc:
-    storage: 50Mi
+  volume:
+    storage: 1000Mi
     accessModes: ReadWriteOnce
   cache:
-    enable: true
+    enabled: true
     cachePath: /cache
     levels: "1:2" # levels sets up a two‑level directory hierarchy under
     keysZone: mapproxy_cache
     keysZoneSize: 10m # 10m is about 80,000 keys
     maxSize: 900m # physical memory
     inactive: 60m
+    expirationTime: 60m
     useTempPath: "off"
   replicaCount: 1
   image:
