@@ -212,7 +212,7 @@ spec:
               path: /service?REQUEST=GetCapabilities&SERVICE=WMTS
               port: {{ .Values.mapproxy.targetPort }}
             initialDelaySeconds: 30
-            timeoutSeconds: 1
+            timeoutSeconds: 5
         ######################################################### Mapproxinator Deployment #########################################################
         - name: mapproxinator
           {{- with .Values.mapproxinator.image }}

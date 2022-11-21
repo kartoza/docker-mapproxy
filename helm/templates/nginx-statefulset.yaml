@@ -14,14 +14,6 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   serviceName: {{ .Release.Name }}-{{ $chartName }}-nginx
-  volumeClaimTemplates:
-    - metadata:
-        name: cache
-      spec:
-        accessModes: [{{ .Values.nginx.pvc.accessModes }}]
-        resources:
-          requests:
-            storage: {{ .Values.nginx.pvc.storage }}
   replicas: {{ .Values.nginx.replicaCount }}
   selector:
     matchLabels:
@@ -76,6 +68,12 @@ spec:
         - name: sources-storage
           persistentVolumeClaim:
             claimName: {{ .Values.rasterCommon.storage.fs.internalPvc.name }}
+        {{- end }}
+        {{- if .Values.nginx.cache.enabled }}
+        - name: cache
+          emptyDir:
+            sizeLimit: {{ .Values.nginx.volume.storage }}
+            medium: "Memory"
         {{- end }}
       containers:
         ## Nginx Deployment
