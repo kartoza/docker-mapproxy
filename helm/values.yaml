@@ -201,7 +201,7 @@ initContainer:
         memory: 128Mi
 
 nginx:
-  enabled: true
+  enabled: false
   volume:
     storage: 1000Mi
     accessModes: ReadWriteOnce
