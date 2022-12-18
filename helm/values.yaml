@@ -206,7 +206,7 @@ nginx:
     storage: 1000Mi
     accessModes: ReadWriteOnce
   cache:
-    enabled: true
+    enabled: false
     cachePath: /cache
     levels: "1:2" # levels sets up a two‑level directory hierarchy under
     keysZone: mapproxy_cache
