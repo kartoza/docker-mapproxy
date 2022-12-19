@@ -90,8 +90,10 @@ spec:
             name: nginx-root-config
             subPath: nginx.conf
             readOnly: true
+          {{- if .Values.nginx.cache.enabled }}
           - mountPath: "/cache"
             name: cache
+          {{- end }}
             
           ports:
             - name: http
