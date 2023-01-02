@@ -2,18 +2,18 @@
 {{- $chartName := include "mapproxy.name" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "mapproxy.cloudProviderDockerRegistryUrl" . -}}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: {{ .Release.Name }}-{{ $chartName }}-nginx
   annotations: 
     collectord.io/index: {{ quote .Values.splunkIndex }}
+    collectord.io/output: splunk
   labels:
     app: {{ .Release.Name }}-{{ $chartName }}
     component: nginx-deployment
     environment: {{ .Values.environment }}
     release: {{ .Release.Name }}
 spec:
-  serviceName: {{ .Release.Name }}-{{ $chartName }}-nginx
   replicas: {{ .Values.nginx.replicaCount }}
   selector:
     matchLabels:
@@ -90,9 +90,10 @@ spec:
             name: nginx-root-config
             subPath: nginx.conf
             readOnly: true
+          {{- if .Values.nginx.cache.enabled }}
           - mountPath: "/cache"
             name: cache
-            
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.nginx.targetPort }}
