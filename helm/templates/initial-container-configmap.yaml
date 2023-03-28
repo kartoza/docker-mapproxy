@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-{{ $chartName }}-init-configmap
+  name: {{ .Release.Name }}-init-configmap
   labels:
     app: {{ .Release.Name }}-{{ $chartName }}
     component: init-container-configmap

@@ -1,13 +1,14 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "mapproxy.name" . -}}
 {{- $cloudProviderFlavor := include "mapproxy.cloudProviderFlavor" . -}}
+{{- $serviceName := include "service.fullname" . -}}
 {{ $targetPort := ternary "external" "internal" .Values.rasterCommon.authentication.opa.enabled }}
 
 {{- if and (and (.Values.mapproxy.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.mapproxy.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}-route
+  name: {{ $releaseName }}-route
   annotations:
     {{- if .Values.mapproxy.route.timeout.enabled }}
     haproxy.router.openshift.io/timeout: {{ .Values.mapproxy.route.timeout.duration }}
@@ -21,7 +22,7 @@ spec:
     targetPort: {{ $targetPort }}
   to:
     kind: Service
-    name: {{ $releaseName }}-{{ $chartName }}-nginx
+    name: {{ $serviceName }}-nginx
   {{- if .Values.mapproxy.route.https }}
   tls:
     termination: edge

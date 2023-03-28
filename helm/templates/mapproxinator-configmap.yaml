@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-{{ $chartName }}-mapproxinator-configmap
+  name: {{ .Release.Name }}-mapproxinator-configmap
   labels:
     app: {{ .Release.Name }}-{{ $chartName }}
     component: mapproxinator-configmap

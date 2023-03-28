@@ -24,7 +24,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}
+  name: {{ $releaseName }}-deployment
   annotations: 
     collectord.io/index: {{ quote .Values.splunkIndex }}
   labels:
@@ -104,7 +104,7 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}-{{ $chartName }}-init-configmap  
+                name: {{ $releaseName  }}-init-configmap
           volumeMounts:
             - mountPath: /app/downloads
               name: mapproxy-config
@@ -174,7 +174,7 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}-{{ $chartName }}-map-proxy-configmap
+                name: {{ $releaseName }}-configmap
           {{- if .Values.mapproxy.resources.enabled }}
           resources:
             {{- toYaml .Values.mapproxy.resources.value | nindent 12 }}
@@ -266,7 +266,7 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ $releaseName }}-{{ $chartName }}-mapproxinator-configmap
+                name: {{ $releaseName }}-mapproxinator-configmap
           volumeMounts:
             - mountPath: /mapproxy/mapproxy.yaml
               name: mapproxy-config
@@ -350,7 +350,7 @@ spec:
         {{- end }}
         - name: uwsgi-config
           configMap:
-            name: {{ .Release.Name }}-{{ $chartName }}-init-configmap
+            name: {{ $releaseName  }}-init-configmap
             items:
             - key: "UWSGI_INI"
               path: "uwsgi.ini"

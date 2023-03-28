@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-{{ $chartName }}-map-proxy-configmap
+  name: {{ .Release.Name }}-configmap
   labels:
     app: {{ .Release.Name }}-{{ $chartName }}
     component: map-proxy-configmap

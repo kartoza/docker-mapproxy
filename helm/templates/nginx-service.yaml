@@ -2,12 +2,13 @@
 {{- if .Values.mapproxy.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "mapproxy.name" . -}}
+{{- $serviceName := include "service.fullname" . -}}
 {{- $cloudProviderFlavor := include "mapproxy.cloudProviderFlavor" . -}}
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}-nginx
+  name: {{ $serviceName }}-nginx
   labels:
     app: {{ $releaseName }}-{{ $chartName }}
     component: nginx-service

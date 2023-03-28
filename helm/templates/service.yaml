@@ -1,11 +1,12 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "mapproxy.name" . -}}
 {{- $cloudProviderFlavor := include "mapproxy.cloudProviderFlavor" . -}}
+{{- $serviceName := include "service.fullname" . -}}
 {{- if .Values.mapproxy.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}
+  name: {{ $serviceName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
