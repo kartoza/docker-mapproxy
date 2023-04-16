@@ -1,0 +1,88 @@
+{{- define "mapproxy-chart.mapproxy-bundle" }}
+  {{- $cloudProviderDockerRegistryUrl := include "mapproxy.cloudProviderDockerRegistryUrl" . -}}
+  {{- $cloudProviderImagePullSecretName := include "mapproxy.cloudProviderImagePullSecretName" . -}}
+  {{- $caSecretName := ternary .Values.authentication.ca.externalSecretName (printf "%s%s" .Release.Name "-root-ca") .Values.authentication.ca.useExternal }}
+  {{- $sslSecretName := ternary .Values.authentication.ssl.externalSecretName (printf "%s%s" .Release.Name "-open-ssl") .Values.authentication.ssl.useExternal }}
+  {{- $postgresSecretName := ternary .Values.rasterCommon.db.secrets.externalSecretName (printf "%s%s" .Release.Name "-postgres-secret") .Values.rasterCommon.db.secrets.useExternal }}
+  {{- $s3SecretName := ternary .Values.rasterCommon.storage.s3.secretName (printf "%s%s" .Release.Name  "-s3-secret") (ne .Values.rasterCommon.storage.s3.secretName "") }}
+  replicas: {{ .replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .chartName }}-{{ .type }}
+      release: {{ .releaseName }}-{{ .type }}
+      run: {{ .releaseName }}-{{ .chartName }}-{{ .type }}
+      app.kubernetes.io/name: {{ include "mapproxy.name" . }}-{{ .type }}
+      app.kubernetes.io/instance: {{ .releaseName }}-{{ .type }}
+  template:
+    metadata:
+      labels:
+        app: {{ .chartName }}-{{ .type }}
+        release: {{ .releaseName }}-{{ .type }}
+        run: {{ .releaseName }}-{{ .chartName }}-{{ .type }}
+        app.kubernetes.io/name: {{ include "mapproxy.name" . }}-{{ .type }}
+        app.kubernetes.io/instance: {{ .releaseName }}-{{ .type }}
+      {{- if .Values.resetOnConfigChange }}
+      annotations:
+        checksum/configmap: {{
+          include (print $.Template.BasePath "/mapproxy-configmap.yaml") . | sha256sum }}
+      {{- end }}
+    spec:
+    {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+    {{- end }}
+      initContainers:
+        ######################################################### Init Container Deployment #########################################################
+        {{- template "mapproxy-chart.init-container" (merge (dict "releaseName" .releaseName "chartName" .chartName "cloudProviderDockerRegistryUrl" $cloudProviderDockerRegistryUrl "s3SecretName" $s3SecretName "postgresSecretName" $postgresSecretName) .)}}
+      containers:
+        ######################################################### MapProxy Deployment #########################################################
+        {{- template "mapproxy-chart.mapproxy-container" (merge (dict "releaseName" .releaseName "chartName" .chartName "cloudProviderDockerRegistryUrl" $cloudProviderDockerRegistryUrl "s3SecretName" $s3SecretName "resources" .resources) .) }}
+        ######################################################### Mapproxinator Deployment #########################################################
+        {{- template "mapproxy-chart.mapproxinator-container" (merge (dict "releaseName" .releaseName "chartName" .chartName "cloudProviderDockerRegistryUrl" $cloudProviderDockerRegistryUrl "s3SecretName" $s3SecretName "postgresSecretName" $postgresSecretName) .) }}
+      volumes:
+        - name: mapproxy-config
+          emptyDir: {}
+        {{- if .Values.rasterCommon.db.sslEnabled }}
+        - name: ca-file
+          secret:
+            secretName: {{ $postgresSecretName }}
+            items:
+              - key: caFile
+                path: ca.pem
+        - name: key-file
+          secret:
+            secretName: {{ $postgresSecretName }}
+            items:
+              - key: keyFile
+                path: key.pem
+        - name: cert-file
+          secret:
+            secretName: {{ $postgresSecretName }}
+            items:
+              - key: certFile
+                path: cert.pem
+        {{- end }}    
+        {{- if .Values.rasterCommon.ca.secretName }}
+        - name: root-ca
+          secret:
+            secretName: {{.Values.rasterCommon.ca.secretName }}
+        {{- end }}                
+        {{- if .Values.authentication.ssl.enabled }}
+        - name: open-ssl
+          secret:
+            secretName: {{ $sslSecretName }}
+        {{- end }}
+        - name: uwsgi-config
+          configMap:
+            name: {{ .releaseName }}-init-configmap
+            items:
+            - key: "UWSGI_INI"
+              path: "uwsgi.ini"
+            - key: "LOG_INI"
+              path: "log.ini"
+        {{- if .Values.rasterCommon.storage.fs.internalPvc.enabled }}
+        - name: sources-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.rasterCommon.storage.fs.internalPvc.name }}
+        {{- end }}
+{{- end }}

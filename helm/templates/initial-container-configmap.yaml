@@ -1,14 +1,15 @@
 {{- if .Values.mapproxy.enabled -}}
 {{- $chartName := include "mapproxy.name" . -}}
+{{- $releaseName := .Release.Name -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-init-configmap
+  name: {{ $releaseName }}-init-configmap
   labels:
-    app: {{ .Release.Name }}-{{ $chartName }}
+    app: {{ $releaseName }}-{{ $chartName }}
     component: init-container-configmap
     environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    release: {{ $releaseName }}
 data:
   LOG_LEVEL: {{ .Values.initContainer.env.logLevel | quote }}
   CONFIG_PROVIDER: {{ .Values.rasterCommon.storage.mapproxyConfigProvider | quote }}

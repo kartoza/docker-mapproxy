@@ -1,14 +1,15 @@
 {{- if .Values.mapproxy.enabled -}}
 {{- $chartName := include "mapproxy.name" . -}}
+{{- $releaseName := .Release.Name -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ $releaseName }}-configmap
   labels:
-    app: {{ .Release.Name }}-{{ $chartName }}
+    app: {{ $releaseName }}-{{ $chartName }}
     component: map-proxy-configmap
     environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    release: {{ $releaseName }}
 data:
   S3_ENDPOINT_URL: {{ .Values.rasterCommon.storage.s3.endpointUrl | quote }}
   S3_BUCKET:  {{ .Values.rasterCommon.storage.s3.tilesBucket | quote }}

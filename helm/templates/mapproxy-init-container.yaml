@@ -1,0 +1,82 @@
+{{- define "mapproxy-chart.init-container" }}
+        - name: init-mapproxy
+          image: {{ .cloudProviderDockerRegistryUrl }}{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: INIT_MODE
+              value: "true"
+            - name: LOG_LEVEL
+              value: {{ .Values.initContainer.env.logLevel }}
+            - name: UPDATED_TIME_JSON_FILE_PATH
+              value: /mapproxy/updated_time.json
+            - name: YAML_DESTINATION_FILE_PATH
+              value: /app/downloads/mapproxy.yaml
+            {{- if eq (upper .Values.rasterCommon.storage.mapproxyConfigProvider) "FS" }}
+            - name: FS_YAML_SOURCE_FILE_PATH
+              value: /configSource/mapproxy.yaml
+            {{- end }}
+            {{- if eq (upper .Values.rasterCommon.storage.mapproxyConfigProvider) "S3" }}
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: accessKeyId
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: secretAccessKey
+            {{- end }}
+            {{- if eq (upper .Values.rasterCommon.storage.mapproxyConfigProvider) "DB" }}  
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .postgresSecretName }}
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .postgresSecretName }}
+                  key: password                        
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ .releaseName }}-init-configmap
+          volumeMounts:
+            - mountPath: /app/downloads
+              name: mapproxy-config
+            {{- if .Values.rasterCommon.db.sslEnabled }}
+            - mountPath: {{ .Values.initContainer.env.ssl.CA_DIR }}
+              name: ca-file
+            - mountPath: {{ .Values.initContainer.env.ssl.KEY_DIR }}
+              name: key-file
+            - mountPath: {{ .Values.initContainer.env.ssl.CERT_DIR }}
+              name: cert-file
+            {{- end }}     
+            {{- if .Values.authentication.ca.enabled }}
+            - mountPath: "/usr/local/share/ca-certificates"
+              name: root-ca
+            {{- end }}
+            {{- if .Values.authentication.ssl.enabled }}
+            - mountPath: "/etc/ssl/openssl.cnf"
+              name: open-ssl
+              subPath: "openssl.cnf"
+            {{- end }}
+            {{- if eq (upper .Values.rasterCommon.storage.mapproxyConfigProvider) "FS" }}
+            - mountPath: /configSource/mapproxy.yaml
+              name: sources-storage
+              subPath: config/mapproxy.yaml
+            {{- end }}
+            {{- if .Values.authentication.ca.enabled }}
+            - name: REQUESTS_CA_BUNDLE
+              value: '/usr/local/share/ca-certificates/ca.crt'
+            {{- end }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.mapproxy.targetPort }}
+            protocol: TCP
+          {{- if .Values.initContainer.resources.enabled }}
+          resources:
+            {{- toYaml .Values.initContainer.resources.value | nindent 12 }}
+          {{- end }}
+{{- end }}

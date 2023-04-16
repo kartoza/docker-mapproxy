@@ -1,14 +1,15 @@
 {{- if .Values.mapproxinator.enabled -}}
 {{- $chartName := include "mapproxy.name" . -}}
+{{- $releaseName := .Release.Name -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-mapproxinator-configmap
+  name: {{ $releaseName }}-mapproxinator-configmap
   labels:
-    app: {{ .Release.Name }}-{{ $chartName }}
+    app: {{ $releaseName }}-{{ $chartName }}
     component: mapproxinator-configmap
     environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    release: {{ $releaseName }}
 data:
   LOG_LEVEL: {{ .Values.mapproxinator.env.logLevel | quote }}
   SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}

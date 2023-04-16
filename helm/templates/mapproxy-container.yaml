@@ -1,0 +1,69 @@
+{{- define "mapproxy-chart.mapproxy-container" }}
+        - name: mapproxy
+          image: {{ .cloudProviderDockerRegistryUrl }}{{ .Values.mapproxy.image.repository }}:{{ .Values.mapproxy.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }} 
+          env:
+            {{- if .Values.rasterCommon.ca.secretName }}
+            - name: REQUESTS_CA_BUNDLE
+              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
+            - name: NODE_EXTRA_CA_CERTS
+              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
+            {{- end }}
+            {{- if eq (upper .Values.rasterCommon.storage.tilesStorageProvider) "S3" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: secretAccessKey
+            {{- end }}
+            {{- if .Values.authentication.ca.enabled }}
+            - name: REQUESTS_CA_BUNDLE
+              value: '/usr/local/share/ca-certificates/ca.crt'
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ .releaseName }}-configmap
+          {{- if .resources.enabled }}
+          resources:
+            {{- toYaml .resources.value | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /mapproxy/mapproxy.yaml
+            name: mapproxy-config
+            subPath: mapproxy.yaml
+          {{- if .Values.authentication.ca.enabled }}
+          - name: root-ca
+            mountPath: "/usr/local/share/ca-certificates"
+          {{- end }}
+          {{- if .Values.authentication.ssl.enabled }}
+          - name: open-ssl
+            mountPath: "/etc/ssl/openssl.cnf"
+            subPath: "openssl.cnf"
+          {{- end }}
+          - mountPath: "/mapproxy/uwsgi.ini"
+            name: uwsgi-config
+            subPath: uwsgi.ini
+          - mountPath: "/mapproxy/log.ini"
+            name: uwsgi-config
+            subPath: log.ini
+          {{- if .Values.rasterCommon.storage.fs.internalPvc.enabled}}
+          - mountPath: /layerSources
+            name: sources-storage
+            subPath: {{ .Values.rasterCommon.storage.fs.internalPvc.tilesSubPath }}
+          {{- end }}
+          ports:
+            - name: uwsgi
+              containerPort: {{ .Values.mapproxy.uwsgi.httpSocket }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /service?REQUEST=GetCapabilities&SERVICE=WMTS
+              port: {{ .Values.mapproxy.targetPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+{{- end }}

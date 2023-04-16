@@ -1,15 +1,18 @@
 {{- if .Values.nginx.enabled -}}
 {{- $chartName := include "mapproxy.name" . -}}
+{{- $releaseName := .Release.Name -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-nginx-configmap
+  name: {{ $releaseName }}-nginx-configmap
   labels:
-    app: {{ .Release.Name }}-{{ $chartName }}
+    app: {{ $releaseName }}-{{ $chartName }}
     component: nginx-configmap
     environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    release: {{ $releaseName }}
 data:
   NGINX_CONFIG: {{ tpl (.Files.Get "config/nginx.conf") . | quote }}
   NGINX_ROOT_CONFIG: {{ .Files.Get "config/nginx_root.conf" | quote }}
+  NGINX_MAPPROXY_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.conf") . | quote }}
+  NGINX_MAPPROXY_WMTS_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.wmts.conf") . | quote }}
 {{- end }}
