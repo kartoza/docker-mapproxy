@@ -149,6 +149,7 @@ mapproxy:
     httpSocket: 8080
     processes: 6
     threads: 10
+    disableLogging: true
   env:
     cors:
       enabled: true
