@@ -15,4 +15,5 @@ data:
   NGINX_ROOT_CONFIG: {{ .Files.Get "config/nginx_root.conf" | quote }}
   NGINX_MAPPROXY_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.conf") . | quote }}
   NGINX_MAPPROXY_WMTS_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.wmts.conf") . | quote }}
+  JWT_JS: {{ tpl (.Files.Get "config/jwt.js") . | quote }}
 {{- end }}
