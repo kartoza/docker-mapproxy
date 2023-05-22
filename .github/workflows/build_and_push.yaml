@@ -1,0 +1,23 @@
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    env:
+      Docker_Repository: ${{ secrets.ACR_URL }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_URL }}
+          username: ${{ secrets.ACR_PUSH_USER }}
+          password: ${{ secrets.ACR_PUSH_TOKEN }}
+      - name: downcase repository
+        run: |
+          echo "Docker_Repository=${Docker_Repository,,}" >>${GITHUB_ENV}
+      - run: docker build . -t ${{ env.Docker_Repository }}
+      - run: docker push ${{ env.Docker_Repository }}
