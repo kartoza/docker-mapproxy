@@ -12,7 +12,7 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
     # Mapproxy user
     ###
     groupadd -r mapproxy -g "${GROUP_ID}" && \
-    useradd -m -d /home/mapproxy/ --gid "${USER_ID}" -s /bin/bash -G mapproxy mapproxy
+    useradd -m -d /home/mapproxy/ --uid "${USER_ID}" --gid "${GROUP_ID}" -s /bin/bash -G mapproxy mapproxy
 
     # Function to creat base configs
     function base_config_generator() {
