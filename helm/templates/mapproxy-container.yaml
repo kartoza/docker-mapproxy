@@ -58,7 +58,7 @@
           {{- end }}
           ports:
             - name: uwsgi
-              containerPort: {{ .Values.mapproxy.uwsgi.httpSocket }}
+              containerPort: {{ .Values.mapproxy.uwsgi.socket }}
               protocol: TCP
           readinessProbe:
             httpGet:

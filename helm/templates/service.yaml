@@ -18,8 +18,8 @@ spec:
   type: NodePort
   {{- end }}
   ports:
-    - port: {{ .Values.mapproxy.uwsgi.httpSocket }}
-      targetPort: {{ .Values.mapproxy.uwsgi.httpSocket }}
+    - port: {{ .Values.mapproxy.uwsgi.socket }}
+      targetPort: {{ .Values.mapproxy.uwsgi.socket }}
       protocol: TCP
       name: http
       {{- if eq $cloudProviderFlavor "minikube" }}
