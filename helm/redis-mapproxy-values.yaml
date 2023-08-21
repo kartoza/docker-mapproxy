@@ -1,7 +1,7 @@
 global:
   cloudProvider:
-    dockerRegistryUrl: my-registry-url.io
-    imagePullSecretName: 'my-registry-secret'
+    dockerRegistryUrl: acrarolibotnonprod.azurecr.io
+    imagePullSecretName: 'acr-registry'
     flavor: openshift
   tracing:
     enabled: false
@@ -9,7 +9,7 @@ global:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  environment: {}
+  environment: raster-dev
   authentication:
     jwtPublicKeySecretName: map-colonies-jwks
 
@@ -63,31 +63,32 @@ rasterCommon:
       enabled: false
       customHeaderName: ""
   db:
-    host: "localhost"
-    name: "raster"
+    host: '10.0.4.4'
+    name: "raster-dev"
     port: 5432
     sslEnabled: false
     rejectUnauthorized: false
     secrets:
-      useExternal: false
-      externalSecretName: ''
+      useExternal: true
+      externalSecretName: 'raster-dev-postgres-secret'
   storage:
     tilesStorageProvider: 'FS'
     mapproxyConfigProvider: db
     fs:
       internalPvc:
-        enabled: true
-        name: internal-pvc
+        enabled: false
+        name: internal-pvc-nfs
         tilesSubPath: tiles
+        configSubPath: config
     s3:
-      enabled: false
-      endpointUrl: 'http://localhost:9000'
-      tilesBucket: 'raster'
+      enabled: true
+      endpointUrl: '10.8.0.9:9000'
+      tilesBucket: 'raster-dev'
       forcePathStyle: true
       sslEnabled: false
       virtualHosting: false
       awsHttps: false
-      secretName: raster-config-s3-secret
+      secretName: 'raster-dev-s3-secret'
 
 environment: development
 initialDelaySeconds: 60
@@ -130,24 +131,24 @@ mapproxy:
       enabled: true
       value:
         limits:
-          cpu: 100m
-          memory: 128Mi
+          cpu: 2000m
+          memory: 2000Mi
         requests:
-          cpu: 100m
-          memory: 128Mi
+          cpu: 2000m
+          memory: 2000Mi
     nodePort: 30002
   image:
     repository: mapproxy
-    tag: 'latest'
+    tag: 1.16.0-test
   db:
     nameOverride:
-    schema: MapproxyConfig
+    schema: MapproxyConfigTest
   port: 80
   targetPort: 8080
   uwsgi:
     socket: 3031
     httpSocket: 8080
-    processes: 16
+    processes: 6
     threads: 10
     disableLogging: true
   env:
@@ -196,9 +197,9 @@ mapproxy:
 initContainer:
   image:
     repository: mapproxinator
-    tag: 'latest'
+    tag: 'v1.0.9'
   env:
-    logLevel: warn
+    logLevel: info
     ssl:
       CA_DIR: /opt/certs/ca/
       KEY_DIR: /opt/certs/key/
@@ -217,7 +218,7 @@ initContainer:
         memory: 128Mi
 
 nginx:
-  enabled: true
+  enabled: false
   volume:
     storage: 1000Mi
     accessModes: ReadWriteOnce
@@ -254,12 +255,12 @@ mapproxinator:
   replicaCount: 1
   image:
     repository: mapproxinator
-    tag: 'latest'
+    tag: 'v1.0.9'
   port: 80
   targetPort: 8081
   nodePort: 30002
   env:
-    logLevel: warn
+    logLevel: info
     poll:
       timeout:
         frequencyMS: 5000
