@@ -147,7 +147,7 @@ mapproxy:
   uwsgi:
     socket: 3031
     httpSocket: 8080
-    processes: 16
+    processes: 6
     threads: 10
     disableLogging: true
   env:
