@@ -25,8 +25,15 @@ fi
 if [ -z "${ALLOW_LISTING}" ]; then
 	ALLOW_LISTING=True
 fi
-if [ -z "${LOGGING}" ]; then
-	LOGGING=false
+if [ -z "${DISABLE_LOGGING}" ]; then
+	DISABLE_LOGGING=false
+fi
+if [ -z "${LOG4XX}" ]; then
+	LOG4XX=true
+fi
+
+if [ -z "${LOG5XX}" ]; then
+	LOG5XX=true
 fi
 if [ -z "${MULTI_MAPPROXY_DATA_DIR}" ]; then
 	MULTI_MAPPROXY_DATA_DIR=/multi_mapproxy
@@ -72,5 +79,4 @@ fi
 if [ -z "${S3_BUCKET_LIST}" ]; then
 	S3_BUCKET_LIST="mapproxy"
 fi
-
 
