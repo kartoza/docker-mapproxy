@@ -25,8 +25,15 @@ fi
 if [ -z "${ALLOW_LISTING}" ]; then
 	ALLOW_LISTING=True
 fi
+if [ -z "${LOGGING}" ]; then
+	LOGGING=false
+fi
 if [ -z "${DISABLE_LOGGING}" ]; then
-	DISABLE_LOGGING=false
+        if [ "${LOGGING}" -eq true ]; then
+            DISABLE_LOGGING=false
+        else
+            DISABLE_LOGGING=true
+        fi
 fi
 if [ -z "${LOG4XX}" ]; then
 	LOG4XX=true
