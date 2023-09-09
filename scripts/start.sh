@@ -102,7 +102,7 @@ EOF
             cp -f "${DATA_PATH}"/uwsgi.ini /settings/uwsgi.ini
           else
             # default value
-            export CONFIG_DATA_PATH PROCESSES CHEAPER THREADS MAPPROXY_USER_ID MAPPROXY_GROUP_ID MAPPROXY_APP_DIR
+            export CONFIG_DATA_PATH PROCESSES CHEAPER THREADS MAPPROXY_USER_ID MAPPROXY_GROUP_ID MAPPROXY_APP_DIR DISABLE_LOGGING LOG4XX LOG5XX
             envsubst < /settings/uwsgi.default.ini > /settings/uwsgi.ini
           fi
         fi
@@ -132,7 +132,7 @@ EOF
     # check if logging file exists
     if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
         if [[ -f /settings/log.ini ]];then
-          cp /settings/log.ini "${CONFIG_DATA_PATH}"/log.ini
+          cp /settings/log.ini "${CONFIG_DATA_PATH}"/log_${HOSTNAME}.ini
         else
             # Always create a new log.ini
             if [[ ! -f "${CONFIG_DATA_PATH}"/log.ini ]];then
