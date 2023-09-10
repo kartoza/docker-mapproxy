@@ -1,5 +1,6 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM python:3.9
+ARG IMAGE_VERSION=3.11.5
+FROM python:${IMAGE_VERSION}
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 #-------------Application Specific Stuff ----------------------------------------------------
@@ -13,7 +14,7 @@ RUN apt-get -y update && \
     python3-lxml \
     libgdal-dev \
     build-essential \
-    python-dev \
+    python3-dev \
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
