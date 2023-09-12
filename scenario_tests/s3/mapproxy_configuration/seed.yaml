@@ -1,0 +1,17 @@
+# ---------------------------------------
+# MapProxy example seeding configuration.
+# ---------------------------------------
+#
+# This is a minimal MapProxy seeding configuration.
+# See full_seed_example.yaml and the documentation for more options.
+#
+
+seeds:
+  world_boundary:
+    caches: [world_cache]
+    # grids: []
+    # coverages: []
+    levels:
+      from: 5
+      to: 6
+

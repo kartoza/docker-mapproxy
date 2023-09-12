@@ -4,8 +4,8 @@ mapproxy_configuration/cache_data
 mapproxy_configuration/log_*
 mapproxy_configuration/source-requests*
 mapproxy_configuration/mapproxy_*
-minio_data/**
-!minio_data/
-!minio_data/.gitkeep
 .idea*
 web/index.html
+scenario_tests/s3/tests/__pycache__*
+scenario_tests/multi_proxy/tests/__pycache__*
+scenario_tests/proxy/tests/__pycache__*

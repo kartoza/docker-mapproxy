@@ -58,44 +58,15 @@ services:
     use_grid_names: true
 
 layers:
-  - name: Hillshade
-    title: Hillshade
-    sources: [hillshade_cache]
+  - name: Demo
+    title: Demo
+    sources: [world_cache]
 
-  - name: SRTM
-    title: SRTM 30m
-    sources: [srtm_cache]
-
-  - name: airports
-    title: Airports
-    sources: [airports_cache]
 
 caches:
-  airports_cache:
-    sources: [airports_wms]
-    grids: [osm_grid]
-    meta_size: [5, 5]
-    meta_buffer: 20
-    concurrent_tile_creators: 2
-    cache:
-      type: s3
-      directory: /airports/
-      directory_layout: reverse_tms
 
-  srtm_cache:
-    sources: [srtm_wms]
-    grids: [osm_grid]
-    meta_size: [5, 5]
-    meta_buffer: 20
-    concurrent_tile_creators: 2
-    cache:
-      type: s3
-      directory: /srtm/
-      directory_layout: reverse_tms
-    format: custom_format
-
-  hillshade_cache:
-    sources: [hillshade_wms]
+  world_cache:
+    sources: [boundary_wms]
     grids: [osm_grid]
     meta_size: [5, 5]
     meta_buffer: 20
@@ -106,9 +77,9 @@ caches:
       directory_layout: reverse_tms
 
 sources:
-  hillshade_wms:
+  boundary_wms:
     coverage:
-      bbox: [20, -9.99999999998001, 59.999999999984, 40]
+      bbox: [-180, -90, 180, 90]
       bbox_srs: EPSG:4326
     type: wms
     image:
@@ -118,47 +89,12 @@ sources:
       version: 1.3.0
       featureinfo: True
     req:
-      url: http://map:8080/ows/?map=project.qgs
-      layers: Hillshade
+      url: http://map:8080/ows/?map=world.qgz
+      layers: map
       transparent: true
     supported_formats: [png]
     supported_srs: ["EPSG:3857", "CRS:84"]
 
-  srtm_wms:
-    coverage:
-      bbox: [20, -9.99999999998001, 59.999999999984, 40]
-      bbox_srs: EPSG:4326
-    type: wms
-    image:
-      transparent_color: "#ffffff"
-      transparent_color_tolerance: 20
-    wms_opts:
-      version: 1.3.0
-      featureinfo: True
-    req:
-      url: http://map:8080/ows/?map=project.qgs
-      layers: SRTM
-      transparent: true
-    supported_formats: [png]
-    supported_srs: ["EPSG:3857", "CRS:84"]
-
-  airports_wms:
-    coverage:
-      bbox: [20, -9.99999999998001, 59.999999999984, 40]
-      bbox_srs: EPSG:4326
-    type: wms
-    image:
-      transparent_color: "#ffffff"
-      transparent_color_tolerance: 20
-    wms_opts:
-      version: 1.3.0
-      featureinfo: True
-    req:
-      url: http://map:8080/ows/?map=project.qgs
-      layers: Airports
-      transparent: true
-    supported_formats: [png]
-    supported_srs: ["EPSG:3857", "CRS:84"]
 
 grids:
   osm_grid:
@@ -170,9 +106,9 @@ globals:
   cache:
     meta_size: [6, 6]
     meta_buffer: 20
-    lock_dir: "/cache_data/locks"
+    lock_dir: "/tmp/cache_data/locks"
     # where to store lockfiles for tile creation
-    tile_lock_dir: "/cache_data/tile_locks"
+    tile_lock_dir: "/tmp/cache_data/tile_locks"
     s3:
       endpoint_url: http://minio:9000/
       bucket_name: mapproxy

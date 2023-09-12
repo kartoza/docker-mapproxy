@@ -1,8 +1,7 @@
 version: '3.9'
 
 volumes:
-   minio_data:
-   mapproxy_cache_data:
+  minio_data:
 services:
   map:
     image: 3liz/qgis-map-server:3.30
@@ -13,7 +12,7 @@ services:
       - QGSRV_CACHE_SIZE=100
       - QGSRV_SERVER_TIMEOUT=300
     volumes:
-      - ./qgis_projects:/web
+      - ./data:/web
   minio:
     image: quay.io/minio/minio
     environment:
@@ -35,39 +34,18 @@ services:
       - THREADS=10
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
-      - MULTI_MAPPROXY=true
-      - ALLOW_LISTING=True
       - LOGGING=true
       - AWS_ACCESS_KEY_ID=minio_admin
       - AWS_SECRET_ACCESS_KEY=secure_minio_secret
       - ENABLE_S3_CACHE=true
       - CREATE_DEFAULT_S3_BUCKETS=true
       - AWS_S3_SIGNATURE_VERSION=s3v4
-      - S3_BUCKET_LIST=mapproxy,bucket2
+      - S3_BUCKET_LIST=mapproxy
       - S3_BUCKET_ENDPOINT=http://minio:9000/
     volumes:
-      # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
-      - ./mapproxy_configuration:/multi_mapproxy
-      - mapproxy_cache_data:/cache_data
+      - ./mapproxy_configuration:/mapproxy
+      - ./tests:/tests
     depends_on:
       - map
       - minio
-  nginx:
-    image: nginx
-    environment:
-      - NGINX_HOST=mapproxy-s3
-      - MULTI_MAPPROXY=true
-    volumes:
-      - ./web:/web
-      - ./sites-enabled:/etc/nginx/conf.d:ro
-      - ./web/nginx_conf.sh:/docker-entrypoint.d/nginx_conf.sh
-    logging:
-      driver: json-file
-      options:
-        max-size: 200m
-        max-file: '10'
-    depends_on:
-      - mapproxy
-      - map
-    ports:
-      - "80:80"
+

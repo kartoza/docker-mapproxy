@@ -1,6 +1,5 @@
 version: '3.9'
-volumes:
-   mapproxy_cache_data:
+
 services:
   map:
     image: 3liz/qgis-map-server:3.30
@@ -11,7 +10,7 @@ services:
       - QGSRV_CACHE_SIZE=100
       - QGSRV_SERVER_TIMEOUT=300
     volumes:
-      - ./qgis_projects:/web
+      - ./data:/web:rw
   mapproxy:
     image: kartoza/mapproxy
     environment:
@@ -24,31 +23,16 @@ services:
       - MULTI_MAPPROXY=true
       - ALLOW_LISTING=True
       - LOGGING=true
+      - config_path=demo,mapproxy
+      - TEST_CLASS=test_request.TestMapProxyTile
     volumes:
-      # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
       - ./mapproxy_configuration:/multi_mapproxy
-      - mapproxy_cache_data:/cache_data
+      - ./tests:/tests
     depends_on:
-      - map
-  nginx:
-    image: nginx
-    environment:
-      - NGINX_HOST=mapproxy
-      - MULTI_MAPPROXY=true
-    volumes:
-      - ./web:/web
-      - ./sites-enabled:/etc/nginx/conf.d:ro
-      - ./web/nginx_conf.sh:/docker-entrypoint.d/nginx_conf.sh
-    logging:
-      driver: json-file
-      options:
-        max-size: 200m
-        max-file: '10'
-    depends_on:
-      - mapproxy
       - map
     ports:
-    - "80:80"
+      - "8080"
+
 
 
 
