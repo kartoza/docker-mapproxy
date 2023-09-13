@@ -15,7 +15,7 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
     ###
     # Add group
     if [ ! $(getent group "${GEO_GROUP_NAME}") ]; then
-      groupadd -r "${GEO_GROUP_NAME}" -g ${GROUP_ID}
+      groupadd -r "${GEO_GROUP_NAME}" -g "${GROUP_ID}"
     fi
 
     # Add user to system
@@ -148,11 +148,11 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
         dir_ownership=("${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings
           /scripts/ /root/.aws "${MAPPROXY_APP_DIR}" "${MAPPROXY_CACHE_DIR}")
         for directory in "${dir_ownership[@]}"; do
-          if [[ $(stat -c '%U' ${directory}) != "${USER_NAME}" ]] && [[ $(stat -c '%G' ${directory}) != "${GEO_GROUP_NAME}" ]];then
-            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" ${directory}
+          if [[ $(stat -c '%U' "${directory}") != "${USER_NAME}" ]] && [[ $(stat -c '%G' "${directory}") != "${GEO_GROUP_NAME}" ]];then
+            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" "${directory}"
           fi
         done
-        exec gosu ${USER_NAME} uwsgi --ini /settings/uwsgi.ini
+        exec gosu "${USER_NAME}" uwsgi --ini /settings/uwsgi.ini
     elif [[ ${PRODUCTION} =~ [Tt][Rr][Uu][Ee] ]] && [[ ${MULTI_MAPPROXY} =~ [Tt][Rr][Uu][Ee] ]]; then
         uwsgi_config "${CONFIG_DATA_PATH}"
         export MULTI_MAPPROXY_DATA_DIR
@@ -171,11 +171,11 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
         dir_ownership=("${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings
           /scripts/ /root/.aws "${MAPPROXY_APP_DIR}" "${MAPPROXY_CACHE_DIR}")
         for directory in "${dir_ownership[@]}"; do
-          if [[ $(stat -c '%U' ${directory}) != "${USER_NAME}" ]] && [[ $(stat -c '%G' ${directory}) != "${GEO_GROUP_NAME}" ]];then
-            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" ${directory}
+          if [[ $(stat -c '%U' "${directory}") != "${USER_NAME}" ]] && [[ $(stat -c '%G' "${directory}") != "${GEO_GROUP_NAME}" ]];then
+            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" "${directory}"
           fi
         done
-        exec gosu ${USER_NAME} uwsgi --ini /settings/uwsgi.ini
+        exec gosu "${USER_NAME}" uwsgi --ini /settings/uwsgi.ini
     else
         ###
         # Change  ownership to mapproxy user and mapproxy group
@@ -183,8 +183,8 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
         dir_ownership=("${MAPPROXY_DATA_DIR}" "${MULTI_MAPPROXY_DATA_DIR}" /settings
           /scripts/ /root/.aws "${MAPPROXY_APP_DIR}" "${MAPPROXY_CACHE_DIR}")
         for directory in "${dir_ownership[@]}"; do
-          if [[ $(stat -c '%U' ${directory}) != "${USER_NAME}" ]] && [[ $(stat -c '%G' ${directory}) != "${GEO_GROUP_NAME}" ]];then
-            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" ${directory}
+          if [[ $(stat -c '%U' "${directory}") != "${USER_NAME}" ]] && [[ $(stat -c '%G' "${directory}") != "${GEO_GROUP_NAME}" ]];then
+            chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" "${directory}"
           fi
         done
         exec "$@"
