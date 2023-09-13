@@ -1,8 +1,11 @@
 version: '3.9'
 
+volumes:
+   minio_data:
+   mapproxy_cache_data:
 services:
   map:
-    image: 3liz/qgis-map-server:3.24
+    image: 3liz/qgis-map-server:3.30
     environment:
       - QGSRV_SERVER_WORKERS=6
       - QGSRV_LOGGING_LEVEL=DEBUG
@@ -19,7 +22,7 @@ services:
     entrypoint: /bin/bash
     command: -c 'minio server /data --console-address ":9001"'
     volumes:
-      - ./minio_data:/mapproxy
+      - minio_data:/mapproxy
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -43,8 +46,9 @@ services:
       - S3_BUCKET_LIST=mapproxy,bucket2
       - S3_BUCKET_ENDPOINT=http://minio:9000/
     volumes:
-      - ./mapproxy_configuration:/mapproxy
+      # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
       - ./mapproxy_configuration:/multi_mapproxy
+      - mapproxy_cache_data:/cache_data
     depends_on:
       - map
       - minio

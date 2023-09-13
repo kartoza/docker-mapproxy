@@ -84,7 +84,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: ./cache_data/airports.mbtiles
+      filename: /cache_data/airports.mbtiles
 
 
 
@@ -96,7 +96,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: file
-      directory: ./cache_data/srtm_cache
+      directory: /cache_data/srtm_cache
     format: custom_format
 
   hillshade_cache:
@@ -107,7 +107,7 @@ caches:
     concurrent_tile_creators: 2
     cache:
       type: mbtiles
-      filename: ./cache_data/hillshade.mbtiles
+      filename: /cache_data/hillshade.mbtiles
 
 sources:
   hillshade_wms:
@@ -177,8 +177,8 @@ globals:
   cache:
     meta_size: [6, 6]
     meta_buffer: 20
-    lock_dir: './cache_data/locks'
+    lock_dir: '/cache_data/locks'
     # where to store lockfiles for tile creation
-    tile_lock_dir: './cache_data/tile_locks'
+    tile_lock_dir: '/cache_data/tile_locks'
   http:
     ssl_no_cert_checks: true

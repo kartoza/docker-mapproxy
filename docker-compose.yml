@@ -1,8 +1,9 @@
 version: '3.9'
-
+volumes:
+   mapproxy_cache_data:
 services:
   map:
-    image: 3liz/qgis-map-server:3.24
+    image: 3liz/qgis-map-server:3.30
     environment:
       - QGSRV_SERVER_WORKERS=6
       - QGSRV_LOGGING_LEVEL=DEBUG
@@ -24,8 +25,9 @@ services:
       - ALLOW_LISTING=True
       - LOGGING=true
     volumes:
-      - ./mapproxy_configuration:/mapproxy
+      # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
       - ./mapproxy_configuration:/multi_mapproxy
+      - mapproxy_cache_data:/cache_data
     depends_on:
       - map
   nginx:

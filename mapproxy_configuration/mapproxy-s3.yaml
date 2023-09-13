@@ -170,9 +170,9 @@ globals:
   cache:
     meta_size: [6, 6]
     meta_buffer: 20
-    lock_dir: "./cache_data/locks"
+    lock_dir: "/cache_data/locks"
     # where to store lockfiles for tile creation
-    tile_lock_dir: "./cache_data/tile_locks"
+    tile_lock_dir: "/cache_data/tile_locks"
     s3:
       endpoint_url: http://minio:9000/
       bucket_name: mapproxy
