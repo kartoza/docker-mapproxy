@@ -19,6 +19,9 @@ fi
 if [ -z "${MAPPROXY_DATA_DIR}" ]; then
 	MAPPROXY_DATA_DIR=/mapproxy
 fi
+if [ -z "${MAPPROXY_CACHE_DIR}" ]; then
+        MAPPROXY_CACHE_DIR=/cache_data
+fi
 if [ -z "${MULTI_MAPPROXY}" ]; then
 	MULTI_MAPPROXY=false
 fi

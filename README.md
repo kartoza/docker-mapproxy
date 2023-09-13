@@ -134,8 +134,8 @@ files will be written into `/mapproxy` or `multi_mapproxy` volumes. You should r
 on how to configure these files and create appropriate service definitions for
 your WMS services. Then restart the container to activate your changes.
 
-The cached wms tiles will be written to ``./configuration/cache_data`` externally or any other path that is
-defined by the mapproxy.yaml.
+The cached wms tiles will be written to a path defined by the environment variable `MAPPROXY_CACHE_DIR` 
+`/cache_data` externally or any other path that is defined by the mapproxy.yaml.
 
 **Note** that the mapproxy containerised application will run as the user that
 owns the /mapproxy folder. The UID:GID of the process will be 1000:1000.
@@ -192,7 +192,7 @@ You can use this methodology to serve as a proxy for other storage solutions, fo
 ## Support
 
 If you require more substantial assistance from [kartoza](https://kartoza.com)  (because our work and interaction on docker-mapproxy is pro bono),
-please consider taking out a [Support Level Agreeement](https://kartoza.com/en/shop/product/support)
+please consider taking out a [Support Level Agreement](https://kartoza.erpnext.com/product/support)
 
 ## Credits
 Tim Sutton (tim@kartoza.com)
