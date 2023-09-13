@@ -1,0 +1,113 @@
+# #####################################################################
+#                 MapProxy example configuration
+# #####################################################################
+#
+# This is _not_ a runnable configuration, but it contains most
+# available options in meaningful combinations.
+#
+# Use this file in addition to the documentation to see where and how
+# things can be configured.
+
+
+services:
+  demo:
+  wms:
+    # only offer WMS 1.1.1
+    versions: ['1.1.1', '1.3.0']
+    # supported SRS for this WMS
+    srs: ['EPSG:4326', 'EPSG:3857']
+    # force the layer extents (BBOX) to be displayed in this SRS
+    bbox_srs: ['EPSG:4326']
+    # limit the supported image formats.
+    image_formats: ['image/jpeg', 'image/png', 'image/gif', 'image/GeoTIFF', 'image/tiff']
+    # return an OGC service exception when one or more sources return errors
+    # or no response at all (e.g. timeout)
+    on_source_errors: raise
+
+    # some WMS clients do not send all required parameters in feature info
+    # requests, MapProxy ignores these errors unless you set strict to true.
+    strict: true
+
+    # list of feature info types the server should offer
+    featureinfo_types: ['text', 'html', 'xml']
+
+    md:
+      # metadata used in capabilities documents
+      title: Mapproxy demo map
+      abstract: The map showing how QGIS Server interacts with Mapproxy.
+      online_resource: http://kartoza.com/
+      contact:
+        person: Kartoza
+        position: GIS Manager
+        organization:
+        address:
+        city:
+        postcode:
+        country: south Africa
+        phone:
+        email:
+      access_constraints:
+        Insert license and copyright information for this service.
+      fees: 'None'
+  tms:
+    use_grid_names: true
+  wmts:
+    restful: true
+    restful_template: '/{Layer}/{TileMatrixSet}/{TileMatrix}/{TileCol}/{TileRow}.{Format}'
+    kvp: true
+  kml:
+    use_grid_names: true
+
+layers:
+  - name: Demo
+    title: Demo
+    sources: [world_cache]
+
+
+caches:
+
+  world_cache:
+    sources: [world_wms]
+    grids: [osm_grid]
+    meta_size: [5,5]
+    meta_buffer: 20
+    concurrent_tile_creators: 2
+    cache:
+      type: mbtiles
+      filename: /tmp/cache_data/world.mbtiles
+
+sources:
+  world_wms:
+    coverage:
+
+      bbox: [-180, -90, 180, 90]
+      bbox_srs: EPSG:4326
+    type: wms
+    image:
+      transparent_color: '#ffffff'
+      transparent_color_tolerance: 20
+    wms_opts:
+      version: 1.3.0
+      featureinfo: True
+    req:
+      url: http://map:8080/ows/?map=world.qgz
+      layers: map
+      transparent: true
+    supported_formats: [png]
+    supported_srs: ['EPSG:3857', 'CRS:84']
+
+grids:
+  osm_grid:
+    base: GLOBAL_MERCATOR
+    srs: 'EPSG:3857'
+    origin: nw 
+
+globals:
+  cache:
+    meta_size: [6, 6]
+    meta_buffer: 20
+    lock_dir: '/tmp/cache_data/locks'
+    # where to store lockfiles for tile creation
+    tile_lock_dir: '/tmp/cache_data/tile_locks'
+  http:
+    ssl_no_cert_checks: true
