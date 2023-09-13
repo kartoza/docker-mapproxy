@@ -90,3 +90,55 @@ if [ -z "${S3_BUCKET_LIST}" ]; then
 	S3_BUCKET_LIST="mapproxy"
 fi
 
+# Function to creat base configs
+function base_config_generator() {
+	DATA_PATH=$1
+	if [[  ! -f "${DATA_PATH}"/mapproxy.yaml ]];then
+		echo " create base configs"
+		mapproxy-util create -t base-config "${DATA_PATH}"
+	fi
+}
+
+ # Function to setup S3 configs
+function configure_s3_cache() {
+      cat > "${AWS_CONFIG_FILE}" <<EOF
+[profile ${S3_DEFAULT_PROFILE}]
+region=${S3_DEFAULT_REGION}
+output=${S3_DEFAULT_OUTPUT}
+EOF
+
+  cat > "${AWS_SHARED_CREDENTIALS_FILE}" <<EOF
+[profile ${S3_DEFAULT_PROFILE}]
+aws_access_key_id=${AWS_ACCESS_KEY_ID}
+aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+EOF
+}
+
+# Enable logging module
+function make_logs (){
+    if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]];then
+      echo "
+from logging.config import fileConfig
+import os.path
+fileConfig(r'${CONFIG_DATA_PATH}/log_${HOSTNAME}.ini', {'here': os.path.dirname(__file__)})
+      " > /tmp/log.py
+      cat "${MAPPROXY_APP_DIR}"/app.py >> /tmp/log.py
+      mv  /tmp/log.py  "${MAPPROXY_APP_DIR}"/app.py
+    fi
+}
+
+ # Check if uwsgi configuration exists
+function uwsgi_config (){
+	DATA_PATH=$1
+	if [[ ! -f /settings/uwsgi.ini ]]; then
+		echo -e "\e[32m No custom uwsgi.ini file, setup using default one from  \033[0m \e[1;31m https://github.com/kartoza/docker-mapproxy/blob/master/build_data/uwsgi.ini \033[0m"
+		# If it doesn't exists, copy from /mapproxy directory if exists
+		if [[ -f ${DATA_PATH}/uwsgi.ini ]]; then
+		cp -f "${DATA_PATH}"/uwsgi.ini /settings/uwsgi.ini
+		else
+		# default value
+		export CONFIG_DATA_PATH PROCESSES CHEAPER THREADS MAPPROXY_USER_ID MAPPROXY_GROUP_ID MAPPROXY_APP_DIR DISABLE_LOGGING LOG4XX LOG5XX
+		envsubst < /settings/uwsgi.default.ini > /settings/uwsgi.ini
+		fi
+	fi
+}
