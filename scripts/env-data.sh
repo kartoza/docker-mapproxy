@@ -29,7 +29,7 @@ if [ -z "${LOGGING}" ]; then
 	LOGGING=false
 fi
 if [ -z "${DISABLE_LOGGING}" ]; then
-        if [ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]; then
+        if [[ "${LOGGING}" =~ [Tt][Rr][Uu][Ee] ]]; then
             DISABLE_LOGGING=false
         else
             DISABLE_LOGGING=true
