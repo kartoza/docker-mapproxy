@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  map:
+    image: 3liz/qgis-map-server:3.30
+    environment:
+      - QGSRV_SERVER_WORKERS=6
+      - QGSRV_LOGGING_LEVEL=DEBUG
+      - QGSRV_CACHE_ROOTDIR=/web
+      - QGSRV_CACHE_SIZE=100
+      - QGSRV_SERVER_TIMEOUT=300
+    volumes:
+      - ./data:/web:rw
+  mapproxy:
+    image: kartoza/mapproxy
+    environment:
+      - PRODUCTION=true
+      - PROCESSES=4
+      - CHEAPER=2
+      - THREADS=10
+      - MAPPROXY_USER_ID=1000
+      - MAPPROXY_GROUP_ID=1000
+      - MULTI_MAPPROXY=false
+      - LOGGING=true
+      - TEST_CLASS=test_request.TestMapProxyTile
+    volumes:
+      - ./mapproxy_configuration:/mapproxy
+      - ./tests:/tests
+    depends_on:
+      - map
+    ports:
+      - "8080"
+
+
+
+
+
+
+
+
