@@ -1,8 +1,7 @@
 version: '3.9'
 
 volumes:
-   multi_mapproxy:
-   mapproxy:
+   mapproxy_cache_data:
 
 services:
 
@@ -13,8 +12,9 @@ services:
         args:
           MAPPROXY_VERSION: ''
       volumes:
-        - mapproxy:/mapproxy
-        - multi_mapproxy:/multi_mapproxy
+        # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
+        - ./mapproxy_configuration:/multi_mapproxy
+        - mapproxy_cache_data:/cache_data
       ports:
         - "8080:8080"
       restart: on-failure
