@@ -187,8 +187,16 @@ if [ "$1" = '/scripts/run_develop_server.sh' ] || [ "$1" = '/scripts/start.sh' ]
             chown -R "${USER_NAME}":"${GEO_GROUP_NAME}" "${directory}"
           fi
         done
-        exec "$@"
+        if [ -n "$2" ]; then
+            exec "$@"
+        else
+            # Default behavior if no additional command(s) provided
+            exec gosu "${USER_NAME}" uwsgi --ini /settings/uwsgi.ini
+        fi
     fi
+else
+    # If the provided command is not one of the primary entrypoints, just execute it
+    exec "$@"
 fi
 
 
