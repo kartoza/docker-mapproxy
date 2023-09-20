@@ -11,6 +11,7 @@ services:
         context: .
         args:
           MAPPROXY_VERSION: ''
+          IMAGE_VERSION: '3.11.5'
       volumes:
         # If MULTI_MAPPROXY=true then mount to /multi_mapproxy otherwise mount to /mapproxy
         - ./mapproxy_configuration:/multi_mapproxy
