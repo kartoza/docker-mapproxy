@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
 FROM python:3.7.10
 MAINTAINER Tim Sutton<tim@kartoza.com>
@@ -41,6 +42,12 @@ RUN mkdir -p /mapproxy /settings
 ADD log.ini /mapproxy/log.ini
 ADD authFilter.py /mapproxy/authFilter.py
 ADD app.py /mapproxy/app.py
+
+ARG PATCH_FILES=true
+RUN --mount=type=bind,source=config/patch/redis.py,target=redis.py \
+    if [ "${PATCH_FILES}" = true ]; then \
+        cp redis.py /usr/local/lib/python3.7/site-packages/mapproxy/cache/redis.py; \
+    fi
 
 RUN chgrp -R 0 /mapproxy /settings /start.sh && \
     chmod -R g=u /mapproxy /settings /start.sh

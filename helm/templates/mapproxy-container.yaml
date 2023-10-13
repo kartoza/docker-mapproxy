@@ -3,6 +3,10 @@
           image: {{ .cloudProviderDockerRegistryUrl }}{{ .Values.mapproxy.image.repository }}:{{ .Values.mapproxy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }} 
           env:
+            - name: SOCKET_CONNECTION_TIMEOUT_SECONDS
+              value: {{ .Values.mapproxy.socket.connectionTimeoutSeconds | quote }}
+            - name: SOCKET_TIMEOUT_SECONDS
+              value: {{ .Values.mapproxy.socket.timeoutSeconds | quote }}
             {{- if .Values.rasterCommon.ca.secretName }}
             - name: REQUESTS_CA_BUNDLE
               value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}

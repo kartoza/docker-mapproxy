@@ -110,6 +110,9 @@ env:
 
 mapproxy:
   enabled: true
+  socket:  
+    connectionTimeoutSeconds: 0.1  # Set a connection timeout, nonnegative floating point number expressing *seconds*.
+    timeoutSeconds: 0.1 # Set a operation timeout nonnegative, floating point number expressing *seconds*.
   wms:
     enabled: true
     replicaCount: 1
