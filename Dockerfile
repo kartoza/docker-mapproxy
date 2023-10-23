@@ -5,6 +5,16 @@ MAINTAINER Tim Sutton<tim@kartoza.com>
 
 #-------------Application Specific Stuff ----------------------------------------------------
 ARG MAPPROXY_VERSION=''
+ARG SHAPELY_VERSION='==1.7.1'
+ARG RIAK_VERSION='==2.4.2'
+
+#TODO 20231023 Shapely needs a downgrade to 1.7.1 because Shapely 2.0 changes the way multigeometries are iterated
+# This should be reverted as soon as people at Mapproxy solve the issue. See:
+# https://github.com/kartoza/docker-mapproxy/issues/63
+# https://github.com/mapproxy/mapproxy/issues/611
+# https://github.com/mapproxy/mapproxy/pull/749/files
+#As an alternative, you can leave "ARG SHAPELY_VERSION=''" and use: 
+# docker build --build-arg SHAPELY_VERSION="==1.7.1" . -t kartoza/mapproxy:latest
 
 RUN apt-get -y update && \
     apt-get install -y \
@@ -21,10 +31,10 @@ RUN apt-get -y update && \
     python3-virtualenv \
     figlet \
     gosu awscli; \
-# verify that the binary works
-	gosu nobody true
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy${MAPPROXY_VERSION} uwsgi pyproj boto3 s3cmd \
-    requests riak==2.4.2 redis numpy
+    # verify that the binary works
+    gosu nobody true
+RUN pip3 --disable-pip-version-check install Shapely${SHAPELY_VERSION} Pillow MapProxy${MAPPROXY_VERSION} uwsgi pyproj boto3 s3cmd \
+    requests riak${RIAK_VERSION} redis numpy
 
 RUN ln -s /usr/lib/libgdal.a /usr/lib/liblibgdal.a
 
