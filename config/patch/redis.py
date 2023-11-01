@@ -14,9 +14,11 @@
 # limitations under the License.
 
 from __future__ import absolute_import
+import datetime
 
 import hashlib
 import os
+import time
 
 from mapproxy.image import ImageSource
 from mapproxy.cache.base import (
@@ -111,6 +113,16 @@ class RedisCache(TileCacheBase):
             log.error('REDIS:get_key error  %s' % e)
             return False
 
+    def load_tile_metadata(self, tile, dimensions=None):
+        if tile.timestamp:
+            return
+        pipe = self.r.pipeline()
+        pipe.ttl(self._key(tile))
+        pipe.memory_usage(self._key(tile))
+        pipe_res = pipe.execute()
+        tile.timestamp = time.mktime(datetime.datetime.now().timetuple()) - self.ttl - int(pipe_res[0])
+        tile.size = pipe_res[1]
+        
     def remove_tile(self, tile, dimensions=None):
         if tile.coord is None:
             return True
