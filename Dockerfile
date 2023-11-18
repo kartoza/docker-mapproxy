@@ -45,8 +45,12 @@ ADD app.py /mapproxy/app.py
 
 ARG PATCH_FILES=true
 RUN --mount=type=bind,source=config/patch/redis.py,target=redis.py \
+    --mount=type=bind,source=config/patch/loader.py,target=loader.py \
+    --mount=type=bind,source=config/patch/spec.py,target=spec.py \
     if [ "${PATCH_FILES}" = true ]; then \
         cp redis.py /usr/local/lib/python3.7/site-packages/mapproxy/cache/redis.py; \
+        cp loader.py /usr/local/lib/python3.7/site-packages/mapproxy/config/loader.py; \
+        cp spec.py /usr/local/lib/python3.7/site-packages/mapproxy/config/spec.py; \
     fi
 
 RUN chgrp -R 0 /mapproxy /settings /start.sh && \

@@ -6,4 +6,4 @@ configuration/city_cache
 configuration/app.py
 city_cache/*.py
 .idea*
-helm/local.yaml
+helm/local*
