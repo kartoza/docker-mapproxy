@@ -1,7 +1,7 @@
 global:
   cloudProvider:
     dockerRegistryUrl: my-registry-url.io
-    imagePullSecretName: 'my-registry-secret'
+    imagePullSecretName: "my-registry-secret"
     flavor: openshift
   tracing:
     enabled: false
@@ -22,7 +22,7 @@ authentication:
     enabled: false
     useExternal: false
     externalSecretName: ""
-  
+
 opa:
   image: openpolicyagent/opa
   imageTag: 0.29.4-envoy-3
@@ -55,9 +55,9 @@ envoy:
 
 rasterCommon:
   ca:
-    secretName: ''
-    path: '/usr/local/share/ca-certificates'
-    key: 'ca.crt'
+    secretName: ""
+    path: "/usr/local/share/ca-certificates"
+    key: "ca.crt"
   authentication:
     opa:
       enabled: false
@@ -70,9 +70,9 @@ rasterCommon:
     rejectUnauthorized: false
     secrets:
       useExternal: false
-      externalSecretName: ''
+      externalSecretName: ""
   storage:
-    tilesStorageProvider: 'FS'
+    tilesStorageProvider: "FS"
     mapproxyConfigProvider: db
     fs:
       internalPvc:
@@ -81,8 +81,8 @@ rasterCommon:
         tilesSubPath: tiles
     s3:
       enabled: false
-      endpointUrl: 'http://localhost:9000'
-      tilesBucket: 'raster'
+      endpointUrl: "http://localhost:9000"
+      tilesBucket: "raster"
       forcePathStyle: true
       sslEnabled: false
       virtualHosting: false
@@ -97,7 +97,7 @@ imagePullPolicy: Always
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
-  imagePullSecretName: 'my-registry-secret'
+  imagePullSecretName: "my-registry-secret"
   flavor: openshift
 
 env:
@@ -110,8 +110,8 @@ env:
 
 mapproxy:
   enabled: true
-  socket:  
-    connectionTimeoutSeconds: 0.1  # Set a connection timeout, nonnegative floating point number expressing *seconds*.
+  socket:
+    connectionTimeoutSeconds: 0.1 # Set a connection timeout, nonnegative floating point number expressing *seconds*.
     timeoutSeconds: 0.1 # Set a operation timeout nonnegative, floating point number expressing *seconds*.
   wms:
     enabled: true
@@ -140,8 +140,8 @@ mapproxy:
           memory: 128Mi
     nodePort: 30002
   image:
-    repository: mapproxy
-    tag: 'latest'
+    repository: docker-mapproxy
+    tag: "latest"
   db:
     nameOverride:
     schema: MapproxyConfig
@@ -153,11 +153,15 @@ mapproxy:
     processes: 6
     threads: 10
     disableLogging: true
+    statsServer:
+      enabled: true
+      stats: 1717
+      statsMinify: true
   env:
     cors:
       enabled: true
-      allowedOrigin: '*'
-      allowedHeaders: ''
+      allowedOrigin: "*"
+      allowedHeaders: ""
     authentication:
       WMS:
         enabled: true
@@ -178,9 +182,14 @@ mapproxy:
     logPrettyPrintEnabled: false
     responseCompressionEnabled: true
     requestPayloadLimit: 1mb
+    metrics:
+      prometheus:
+        scrape: true
+        port: 9117
+      enabled: true
   route:
     enabled: true
-    host: 
+    host:
     path: /api/raster/v1
     https: true
     useCert: false
@@ -189,17 +198,17 @@ mapproxy:
       duration: 60s # supported units (us, ms, s, m, h, d)
   ingress:
     enabled: false
-    type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes'
+    type: "nginx-org" # supported values: 'nginx-org' | 'nginx-kubernetes'
     path: /api/raster/v1
-    host: 'localhost'
-    tls: 
+    host: "localhost"
+    tls:
       enabled: true
-      useExternal: ''
+      useExternal: ""
 
 initContainer:
   image:
     repository: mapproxinator
-    tag: 'latest'
+    tag: "latest"
   env:
     logLevel: warn
     ssl:
@@ -237,7 +246,7 @@ nginx:
   replicaCount: 1
   image:
     repository: nginx
-    tag: 'latest' 
+    tag: "latest"
   port: 8080
   internalServicePort: 80
   targetPort: 8080
@@ -257,7 +266,7 @@ mapproxinator:
   replicaCount: 1
   image:
     repository: mapproxinator
-    tag: 'latest'
+    tag: "latest"
   port: 80
   targetPort: 8081
   nodePort: 30002
@@ -279,6 +288,23 @@ mapproxinator:
     logPrettyPrintEnabled: false
     responseCompressionEnabled: true
     requestPayloadLimit: 1mb
+  resources:
+    enabled: false
+    value:
+      limits:
+        cpu: 500m
+        memory: 500Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+uwsgiExporter:
+  image:
+    repository: "timonwong/uwsgi-exporter"
+    tag: "latest"
+  env:
+    logLevel: info # one of [debug, info, warn, error]
+  port: 9117
   resources:
     enabled: true
     value:
