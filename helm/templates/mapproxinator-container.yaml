@@ -15,6 +15,8 @@
               value: /mapproxy/updated_time.json
             - name: YAML_DESTINATION_FILE_PATH
               value: /mapproxy/mapproxy.yaml
+            - name: UWSGI_FIFO_FILE_PATH
+              value: /uwsgi_config/fifo0
             {{- if eq (upper .Values.rasterCommon.storage.mapproxyConfigProvider) "FS" }}
             - name: FS_YAML_SOURCE_FILE_PATH
               value: /configSource/mapproxy.yaml
@@ -51,6 +53,8 @@
             - configMapRef:
                 name: {{ .releaseName }}-mapproxinator-configmap
           volumeMounts:
+            - name: shared-config
+              mountPath: /uwsgi_config
             - mountPath: /mapproxy/mapproxy.yaml
               name: mapproxy-config
               subPath: mapproxy.yaml

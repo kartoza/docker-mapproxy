@@ -275,9 +275,6 @@ mapproxinator:
     poll:
       timeout:
         frequencyMS: 5000
-        readinessKillMaxSeconds: 300
-        requestsKillSeconds: 5
-        afterUpdateDelaySeconds: 0.5
     ssl: # external paths
       CA_DIR: /opt/certs/ca/
       KEY_DIR: /opt/certs/key/

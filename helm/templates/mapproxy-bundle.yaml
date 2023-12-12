@@ -50,6 +50,8 @@
       volumes:
         - name: mapproxy-config
           emptyDir: {}
+        - name: shared-config
+          emptyDir: {}
         {{- if .Values.rasterCommon.db.sslEnabled }}
         - name: ca-file
           secret:

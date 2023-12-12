@@ -27,7 +27,7 @@ from authFilter import AuthFilter
 fileConfig(r'/mapproxy/log.ini', {'here': os.path.dirname(__file__)})
 
 # create map proxy application
-map_proxy = make_wsgi_app(r'/mapproxy/mapproxy.yaml', reloader=True)
+map_proxy = make_wsgi_app(r'/mapproxy/mapproxy.yaml', reloader=False)
 
 # add cors support
 if(os.environ.get('CORS_ENABLED', 'false').lower() == 'true'):
