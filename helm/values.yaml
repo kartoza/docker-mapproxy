@@ -154,7 +154,6 @@ mapproxy:
     threads: 10
     disableLogging: true
     statsServer:
-      enabled: true
       stats: 1717
       statsMinify: true
   env:
