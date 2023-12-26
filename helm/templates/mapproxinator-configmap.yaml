@@ -27,4 +27,5 @@ data:
   DB_SSL_PATH_CA: {{ .Values.mapproxinator.env.ssl.CA_FILE_LOCATION }}
   DB_SSL_PATH_KEY: {{ .Values.mapproxinator.env.ssl.KEY_FILE_LOCATION }}
   DB_SSL_PATH_CERT: {{ .Values.mapproxinator.env.ssl.CERT_FILE_LOCATION }}
+  PGAPPNAME: {{ $chartName }}
 {{- end }}
