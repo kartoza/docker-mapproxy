@@ -1,4 +1,0 @@
-{{- if .Values.mapproxy.enabled -}}
-{{- $nodePort := .Values.mapproxy.wmts.nodePort -}}
-{{- template "mapproxy-chart.mapproxy-service" (merge (dict "type" "wmts" "nodePort" $nodePort) .)}}
-{{- end }}

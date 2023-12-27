@@ -1,0 +1,738 @@
+---
+# Source: mapproxy/charts/nginx/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdaf-nginx-base-configmap
+data:
+  default.conf: "server {\n    listen 8080;\n    server_name  localhost;\n\n    location / {\n        set $original_method $request_method;\n        set $original_args $args;\n\n        \n        set $domain ;\n        auth_request /_validate_jwt;\n        \n\n        root   /usr/share/nginx/html;\n        index  index.html index.htm;\n    }\n\n    \n    location = /_validate_jwt {\n      internal;\n\n      js_content auth.opaAuth;\n    }\n\n    location = /opa {\n      internal;\n\n      proxy_set_header Content-Type application/json;\n      proxy_pass http://opa-service.infra-services/v1/data/http/authz/decision;\n    }    \n    \n\n    error_page   500 502 503 504  /50x.html;\n    location = /50x.html {\n        root   /usr/share/nginx/html;\n    }\n}\n"
+  nginx.conf: "#user  nginx;\nload_module /otel/otel_ngx_module.so;\nload_module modules/ngx_http_js_module.so;\nworker_processes  4;\n\nerror_log  /var/log/nginx/error.log warn;\npid        /tmp/nginx.pid;\n\n\nevents {\n    worker_connections  1024;\n}\n\n\nhttp {\n    opentelemetry_config /otel/otel-nginx.toml;\n    include       /etc/nginx/mime.types;\n    default_type  application/octet-stream;\n\n    \n    js_import auth from /etc/nginx/auth.js;\n    js_set $jwt_payload_sub auth.jwtPayloadSub;\n    \n\n    include /etc/nginx/log_format.conf;\n    \n    access_log  /var/log/nginx/access.log  main;\n\n    sendfile        on;\n    #tcp_nopush     on;\n\n    keepalive_timeout  65;\n\n    #gzip  on;\n\n    include /etc/nginx/conf.d/*.conf;\n}\n"
+  log_format.conf: "map $msec $nanosec {\n    ~(.*)\\.(.*) $1$2000000;\n}\n\nlog_format main escape=json \n'{'\n    '\"Timestamp\":$nanosec,'\n    '\"Attributes\":{'\n        '\"mapcolonies.time_local\":\"$time_local\",'\n        \n        '\"mapcolonies.http.auth.token.client_name\":\"$jwt_payload_sub\",'\n        \n        '\"http.request.method\":\"$request_method\",'\n        '\"http.request.header.referer\":\"$http_referer\",'\n        '\"http.request.body.size\":$content_length,'\n        '\"http.response.body.size\":$body_bytes_sent,'\n        '\"http.response.header.x_forwarded_for\":\"$proxy_add_x_forwarded_for\"'\n        '\"http.response.status_code\":$status,'\n        '\"user_agent.original\":\"$http_user_agent\",'\n        '\"network.protocol\":\"$server_protocol\",'\n        '\"mapcolonies.request_time\":$request_time,'\n        '\"mapcolonies.http.upstream_connect_time\":$upstream_connect_time,'\n        '\"mapcolonies.http.upstream_response_time\":$upstream_response_time,'\n        '\"mapcolonies.http.upstream_addr\":\"$upstream_addr\",'\n        '\"mapcolonies.http.upstream_status_code\":$upstream_status,'\n        '\"mapcolonies.http.upstream_cache_status\":\"$upstream_cache_status\",'\n        '\"mapcolonies.server\":\"$hostname\",'\n        '\"server.address\":\"$host\",'\n        '\"server.port\":$server_port,'\n        '\"client.address\":\"$remote_addr\",'\n        '\"client.port\":$remote_port,'\n        '\"url.scheme\":\"$scheme\",'\n        '\"url.path\":\"$uri\",'\n        '\"url.full\":\"$request_uri\",'\n    '},'\n    '\"Resource\":{'\n        # Additional important log details should be added here\n        '\"service.name\":\"nginx\",'\n        '\"service.version\":\"latest\"'\n    '},'\n    '\"TraceId\":\"$opentelemetry_trace_id\",' ## this is a byte sequence (hex-encoded in JSON)\n    '\"SpanId\":\"$opentelemetry_span_id\",'\n    '\"SeverityText\":\"INFO\",'\n    '\"SeverityNumber\":9,'\n    '\"InstrumentationScope\":\"access.log\",'\n    '\"Body\":\"$request\"'\n'}';\n"
+---
+# Source: mapproxy/templates/intital-container/initial-container-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdaf-init-configmap
+  labels:
+    app: sdaf-mapproxy
+    component: init-container-configmap
+    environment: development
+    release: sdaf
+data:
+  LOG_LEVEL: "warn"
+  CONFIG_PROVIDER: "db"
+  S3_ENDPOINT_URL: "http://localhost:9000"
+  S3_BUCKET: "raster"
+  S3_SSL_ENABLED: "false"
+  DB_HOST: "localhost"
+  DB_NAME: "raster"
+  DB_SCHEMA: "MapproxyConfig"
+  DB_PORT: "5432"
+  DB_SSL_ENABLE: "false"
+  DB_SSL_REJECT_UNAUTHORIZED: "false"
+  DB_SSL_PATH_CA: /opt/certs/ca/ca.pem
+  DB_SSL_PATH_KEY: /opt/certs/key/key.pem
+  DB_SSL_PATH_CERT: /opt/certs/cert/cert.pem
+  UWSGI_INI: "[uwsgi]\n; based on https://github.com/kartoza/docker-mapproxy/blob/master/build_data/uwsgi.ini\nchdir = /mapproxy\npyargv = /mapproxy.yaml\n; attention  do not change - its releated to volumesMount configuration and mapproxinator\nmaster-fifo = /uwsgi_config/fifo0 \nwsgi-file = app.py\npidfile=/tmp/mapproxy.pid\nsocket = :3031\nprocesses = 6 ; Maximum number of workers allowed\nthreads = 10\n; TODO: using default usgi config untill we figure out the best configuration\n; cheaper = 2                                        ; Minimum number of workers allowed\nenable-threads = true\nmaster = true\ndisable-logging = true\nlog-5xx = true\nlog-4xx = true\nvacuum = true\ndie-on-term = true                   ; Shutdown when receiving SIGTERM (default is respawn)\nneed-app = true                      ; This parameter prevents uWSGI from starting if it is unable to find or load your application module\nmax-requests = 1000                  ; Restart workers after this many requests\nreload-on-rss = 2048                 ; Restart workers after this much resident memory\nbuffer-size = 14336                  ; 14K, Set the internal buffer size for uwsgi packet parsing. Default is 4k. \nworker-reload-mercy = 60             ; How long to wait before forcefully killing workers\nwsgi-disable-file-wrapper = true\nharakiri = 60\npy-callos-afterfork = true           ; allow workers to trap signals\n; TODO: using default usgi config untill we figure out the best configuration\n; cheaper-algo = busyness\n; cheaper-initial = 2                  ; Workers created at startup\n; cheaper-overload = 1                 ; Length of a cycle in seconds\n; cheaper-step = 2                     ; How many workers to spawn at a time\n; cheaper-busyness-multiplier = 30     ; How many cycles to wait before killing workers\n; cheaper-busyness-min = 20            ; Below this threshold, kill workers (if stable for multiplier cycles)\n; cheaper-busyness-max = 70            ; Above this threshold, spawn new workers\n; cheaper-busyness-backlog-alert = 2   ; Spawn emergency workers if more than this many requests are waiting in the queue\n; cheaper-busyness-backlog-step = 2    ; How many emergency workers to create if there are too many requests in the queue\nchmod-socket = 664\nuid = 1000\ngid = 0\nhttp-socket = :8080\n\nstats = :1717\nstats-http = true\nstats-min = true\n"
+  LOG_INI: "[loggers]\nkeys=root,source_requests\n\n[handlers]\nkeys=mapproxy,source_requests\n\n[formatters]\nkeys=default,requests\n\n[logger_root]\nlevel= WARNING\nhandlers=mapproxy\n\n[logger_source_requests]\nlevel= WARNING\nqualname=mapproxy.source.request\n# propagate=0 -> do not show up in logger_root\npropagate=0\nhandlers=source_requests\n\n[handler_mapproxy]\nclass=StreamHandler\nformatter=default\n#args=(r\"%(here)s/mapproxy/mapproxy.log\", \"a\")\n\n[handler_source_requests]\nclass=StreamHandler\nformatter=requests\n#args=(r\"%(here)s/source-requests.log\", \"a\")\n\n[formatter_default]\nformat=%(asctime)s - %(levelname)s - %(name)s - %(message)s\n\n[formatter_requests]\nformat=[%(asctime)s] %(message)s\n"
+---
+# Source: mapproxy/templates/mapproxinator/mapproxinator-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdaf-mapproxinator-configmap
+  labels:
+    app: sdaf-mapproxy
+    component: mapproxinator-configmap
+    environment: development
+    release: sdaf
+data:
+  LOG_LEVEL: "warn"
+  SERVER_PORT: "8081"
+  CONFIG_PROVIDER: "db"
+  POLL_TIMEOUT_FREQUENCY_MS: "5000"
+  S3_ENDPOINT_URL: "http://localhost:9000"
+  S3_BUCKET: "raster"
+  S3_SSL_ENABLED: "false"
+  DB_HOST: "localhost"
+  DB_NAME: "raster"
+  DB_SCHEMA: "MapproxyConfig"
+  DB_PORT: "5432"
+  DB_SSL_ENABLE: "false"
+  DB_SSL_REJECT_UNAUTHORIZED: "false"
+  DB_SSL_PATH_CA: /opt/certs/ca/ca.pem
+  DB_SSL_PATH_KEY: /opt/certs/key/key.pem
+  DB_SSL_PATH_CERT: /opt/certs/cert/cert.pem
+---
+# Source: mapproxy/templates/mapproxy/mapproxy-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdaf-configmap
+  labels:
+    app: sdaf-mapproxy
+    component: map-proxy-configmap
+    environment: development
+    release: sdaf
+data:
+  S3_ENDPOINT_URL: "http://localhost:9000"
+  S3_BUCKET:  "raster"
+  AWS_HTTPS: "false"
+  TELEMETRY_TRACING_ENABLED: "false"
+  TELEMETRY_TRACING_ENDPOINT: "http://localhost:55681/v1/trace"
+  CORS_ENABLED: "true"
+  CORS_ALLOWED_HEADERS: ""
+  CORS_ALLOWED_ORIGIN: "*"
+  AUTH_ENABLED: "true"
+---
+# Source: mapproxy/templates/nginx/nginx-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdaf-nginx-configmap
+  labels:
+    app: sdaf-mapproxy
+    component: nginx-configmap
+    environment: development
+    release: sdaf
+data:
+  NGINX_CONFIG: "\n\n# Define upstreams for WMS and WMTS respectively\nupstream mapproxy-wms {\n    server sdaf-service-wms:3031;\n}\n\nupstream mapproxy-wmts {\n    server sdaf-service-wmts:3031;\n}\n\nmap $msec $nanosec {\n    \"~*(\\d{10})\\.(\\d{3})\" \"$1$2000000\";\n}\nuwsgi_cache_path /cache levels=1:2\nkeys_zone=mapproxy_cache:10m\nmax_size=900m inactive=60m use_temp_path=off;\njs_import auth from /etc/nginx/jwt.js;\njs_set $jwt_payload_sub auth.jwtPayloadSub;\n\n\nserver {\n    listen      8080;\n    # the domain name it will serve for\n    server_name mapproxy;\n    # max upload size, adjust to taste\n    keepalive_timeout  500;\n    proxy_connect_timeout       600;\n    proxy_send_timeout          600;\n    send_timeout                600;\n    client_max_body_size        5000;\n    client_header_timeout       600;\n    client_body_timeout         600;\n    client_header_buffer_size   12288; # 12K\n    large_client_header_buffers 4 12288; # 12K\n    fastcgi_read_timeout        300;\n    location /liveness {\n        access_log    off;\n        log_not_found off;\n        return 200 \"I'm alive\\n\";\n    }\n\n    # Handle all requests to /service and redirect according to wanted service type if provided\n    location /api/raster/v1/service {\n        include uwsgi_params;\n        if ($args ~* 'service=wmts') {\n            rewrite ^ /api/raster/v1/service/wmts last;\n        }\n        if ($args ~* 'service=wms') {\n            rewrite ^ /api/raster/v1/service/wms last;\n        }\n        include nginx.mapproxy.conf;\n        uwsgi_pass mapproxy-wmts;\n    }\n\n    # Special location for handling WMTS KVP requests\n    location /api/raster/v1/service/wmts {\n        include uwsgi_params;\n        include nginx.mapproxy.conf;\n        include nginx.mapproxy.wmts.conf;\n        uwsgi_pass mapproxy-wmts;\n    }\n\n    # Special location for handling WMS requests (only KVP is possible)\n    location /api/raster/v1/service/wms {\n        include uwsgi_params;\n        include nginx.mapproxy.conf;\n        uwsgi_cache_key \"$host$request_uri\";\n        uwsgi_cache mapproxy_cache;\n        # Specifically instruct not to cache and set cache_status=BYPASS\n        uwsgi_no_cache \"1\";\n        uwsgi_cache_bypass \"1\";\n        uwsgi_pass mapproxy-wms;\n    }\n\n    # Handle WMTS RESTfull requests\n    location /api/raster/v1/wmts {\n        include uwsgi_params;\n        include nginx.mapproxy.conf;\n        include nginx.mapproxy.wmts.conf;\n        uwsgi_pass mapproxy-wmts;\n    }\n\n    # Handle WMS RESTfull requests type (as it is supported in mapproxy)\n    location /api/raster/v1/wms {\n        include uwsgi_params;\n        include nginx.mapproxy.conf;\n        # Specifically instruct not to cache and set cache_status=BYPASS\n        proxy_no_cache \"1\";\n        proxy_cache_bypass \"1\";\n        uwsgi_pass mapproxy-wms;\n    }\n\n    # Catch all requests that do not apply to other specific paths\n    location /api/raster/v1 {\n        include uwsgi_params;\n        include nginx.mapproxy.conf;\n        uwsgi_pass mapproxy-wmts;\n    }   \n}\n"
+  NGINX_ROOT_CONFIG: "#user  nginx;\nworker_processes  auto;\n\nerror_log  /var/log/nginx/error.log notice;\npid        /tmp/nginx.pid;\nload_module modules/ngx_http_js_module.so;\nload_module /otel/otel_ngx_module.so;\n\nevents {\n    worker_connections  1024;\n}\n\nhttp {\n    include       /etc/nginx/mime.types;\n    default_type  application/octet-stream;\n\nlog_format json escape=json\n    '{'\n        '\"Timestamp\": $nanosec,'\n        '\"Attributes\": {'\n            '\"time_local\": \"$time_local\",'\n            '\"http.status_code\": $status,'\n            '\"http.url\": \"$http_referer\",'\n            '\"http.x_forwarded_for\": \"$http_x_forwarded_for\",'\n            '\"http.proxy_add_x_forwarded_for\": \"$proxy_add_x_forwarded_for\",'\n            '\"http.user_agent\": \"$http_user_agent\",'\n            '\"http.request_time\": $request_time,'\n            '\"request_length\": \"$request_length\",'\n            '\"http.host\": \"$host\",'\n            '\"upstream_addr\": \"$upstream_addr\",'\n            '\"upstream_status\": \"$upstream_status\",'\n            '\"upstream_connect_time\": \"$upstream_connect_time\",'\n            '\"upstream_header_time\": \"$upstream_header_time\",'\n            '\"upstream_response_time\": \"$upstream_response_time\",'\n            '\"upstream_response_length\": \"$upstream_response_length\",'\n            '\"upstream_bytes_sent\": \"$upstream_bytes_sent\",'\n            '\"upstream_bytes_received\": \"$upstream_bytes_received\",'\n            '\"upstream_http_name\": \"$upstream_http_name\",'\n            '\"bytes_sent\": \"$bytes_sent\",'\n            '\"body_bytes_sent\": \"$body_bytes_sent\",'\n            '\"content_type\":\"$content_type\",'\n            '\"content_length\":\"$content_length\",'\n            '\"remote_addr\": \"$remote_addr\",'\n            '\"remote_port\": \"$remote_port\",'\n            '\"remote_user\": \"$remote_user\",'\n            '\"connection\":\"$connection\",'\n            '\"cache_status\":\"$upstream_cache_status\",'\n            '\"connection_requests\": \"$connection_requests\",'\n            '\"connections_active\": \"$connections_active\",'\n            '\"connections_reading\": \"$connections_reading\",'\n            '\"connections_writing\": \"$connections_writing\",'\n            '\"connections_waiting\": \"$connections_waiting\",'\n            '\"ancient_browser\": \"$ancient_browser\",'\n            '\"modern_browser\": \"$modern_browser\",'\n            '\"binary_remote_addr\": \"$binary_remote_addr\",'\n            '\"hostname\": \"$hostname\",'\n            '\"http_name\": \"$http_name\",'\n            '\"pid\": \"$pid\",'\n            '\"proxy_protocol_addr\": \"$proxy_protocol_addr\",'\n            '\"proxy_protocol_port\": \"$proxy_protocol_port\",'\n            '\"proxy_protocol_server_addr\": \"$proxy_protocol_server_addr\",'\n            '\"proxy_protocol_server_port\": \"$proxy_protocol_server_port\",'\n            '\"proxy_host\": \"$proxy_host\",'\n            '\"proxy_port\": \"$proxy_port\",'\n            '\"realip_remote_addr\": \"$realip_remote_addr\",'\n            '\"realip_remote_port\": \"$realip_remote_port\",'\n            '\"server_name\": \"$server_name\",'\n            '\"server_addr \": \"$server_addr \",'\n            '\"server_port\": \"$server_port\",'\n            '\"server_protocol\": \"$server_protocol\",'\n            '\"ssl_client_serial\": \"$ssl_client_serial\",'\n            '\"ssl_client_fingerprint\": \"$ssl_client_fingerprint\",'\n            '\"ssl_client_i_dn\": \"$ssl_client_i_dn\",'\n            '\"ssl_client_i_dn_legacy\": \"$ssl_client_i_dn_legacy\",'\n            '\"ssl_client_s_dn\": \"$ssl_client_s_dn\",'\n            '\"ssl_client_s_dn_legacy\": \"$ssl_client_s_dn_legacy\",'\n            '\"ssl_session_id\": \"$ssl_session_id\",'\n            '\"ssl_session_reused\": \"$ssl_session_reused\",'\n            '\"tcpinfo_rtt\": \"$tcpinfo_rtt\",'\n            '\"tcpinfo_rttvar\": \"$tcpinfo_rttvar\",'\n            '\"tcpinfo_snd_cwnd\": \"$tcpinfo_snd_cwnd\",'\n            '\"tcpinfo_rcv_space\": \"$tcpinfo_rcv_space\",'\n            '\"uid_got\": \"$uid_got\",'\n            '\"uid_reset\": \"$uid_reset\",'\n            '\"uid_set\": \"$uid_set\"'\n        '},'\n        #'\"TraceId\": \"$opentelemetry_trace_id\",' ## this is a byte sequence (hex-encoded in JSON)\n        #'\"SpanId\": \"$opentelemetry_span_id\",'\n        '\"TokenUser\": \"$jwt_payload_sub\",'\n        '\"SeverityText\": \"INFO\",'\n        '\"SeverityNumber\": 9,'\n        '\"RequestBody\": \"$request_body\",'\n        '\"Body\": \"$request\"'\n    '}';\n\n    {{ if .Values.nginx.authorization.enabled }}\n    js_import auth from /etc/nginx/auth.js;\n    js_set $jwt_payload_sub auth.jwtPayloadSub;\n    {{ end }}\n\n    access_log  /var/log/nginx/access.log json;\n\n    sendfile        on;\n    #tcp_nopush     on;\n\n    keepalive_timeout  65;\n\n    #gzip  on;\n\n    include /etc/nginx/conf.d/*.conf;\n}\n"
+  NGINX_MAPPROXY_CONFIG: "gzip on;\ngzip_types text/plain application/json application/xml text/xml;\nuwsgi_param HTTP_Host $http_host;\nuwsgi_param HTTP_X_SCRIPT_NAME /api/raster/v1;\nuwsgi_hide_header    Set-Cookie;  # ensures the header will not be passed back to the client\nuwsgi_param HTTP_Cookie \"\"; # ensures that a client cannot pass any prior cookies to the webapp and spoil your cache\n"
+  NGINX_MAPPROXY_WMTS_CONFIG: "\nuwsgi_cache_key \"$host$request_uri\";\nuwsgi_cache mapproxy_cache;\nuwsgi_cache_valid 200 60m; # will cache only valid 200 status code responses\nuwsgi_cache_valid any 0; # will disable caching all not 200 status code responses\nuwsgi_cache_background_update on; # Allows starting a background subrequest to update an expired cache item, while a stale cached response is returned to the client.\nuwsgi_cache_use_stale error timeout updating http_500 http_503; # return tile from cache in case of server down \nuwsgi_cache_revalidate on; # Enables revalidation of expired cache items\nuwsgi_cache_lock on; # minimize the number of accesses to proxied servers when populating a new cache element\nuwsgi_cache_min_uses 3; # Sets the number of requests after which the response will be cached\nset $no_cache \"\";\nif ($request_uri ~* \\.xml) { # support blocking restful format request of capabilities\n    set $no_cache \"1\";\n}\nif ($arg_request = \"GetCapabilities\") { # support blocking kvp format request of capabilities\n    set $no_cache \"1\";\n}\nuwsgi_no_cache $no_cache;\nuwsgi_cache_bypass $no_cache;\n"
+---
+# Source: mapproxy/charts/nginx/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdaf-nginx-service
+  labels:
+    app: sdaf-nginx
+    component: nginx-service
+    environment: development
+    release: sdaf
+spec:
+  # In case cloudProavider=azure
+  # In case cloudProvider=minikube
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: nginx
+  selector:
+    app: sdaf-nginx
+    release: sdaf
+    run: sdaf-nginx
+---
+# Source: mapproxy/templates/mapproxy/service-wms.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdaf-service-wms
+  labels:
+    app: mapproxy-wms
+    component: mapproxy
+    environment: development
+    release: sdaf
+    helm.sh/chart: mapproxy-1.0.0
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - port: 3031
+      targetPort: 3031
+      protocol: TCP
+      name: http
+  selector:
+    app: mapproxy-wms
+    release: sdaf-wms
+    run: sdaf-mapproxy-wms
+    app.kubernetes.io/name: mapproxy-wms
+    app.kubernetes.io/instance: sdaf-wms
+---
+# Source: mapproxy/templates/mapproxy/service-wmts.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdaf-service-wmts
+  labels:
+    app: mapproxy-wmts
+    component: mapproxy
+    environment: development
+    release: sdaf
+    helm.sh/chart: mapproxy-1.0.0
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  ports:
+    - port: 3031
+      targetPort: 3031
+      protocol: TCP
+      name: http
+  selector:
+    app: mapproxy-wmts
+    release: sdaf-wmts
+    run: sdaf-mapproxy-wmts
+    app.kubernetes.io/name: mapproxy-wmts
+    app.kubernetes.io/instance: sdaf-wmts
+---
+# Source: mapproxy/charts/nginx/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdaf-nginx-deployment
+  labels:
+    app: sdaf-nginx
+    component: nginx-deployment
+    environment: development
+    release: sdaf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sdaf-nginx
+      release: sdaf
+      run: sdaf-nginx
+  template:
+    metadata:
+      labels:
+        app: sdaf-nginx
+        release: sdaf
+        run: sdaf-nginx
+      annotations:
+    spec:
+      imagePullSecrets:
+        - name: "my-registry-secret"
+      volumes:
+        - name: nginx-base-config
+          configMap:	
+            name: sdaf-nginx-base-configmap
+            
+        - configMap:
+            name: 'sdaf-nginx-configmap'
+          name: nginx-config
+        - emptyDir:
+            medium: Memory
+            sizeLimit: '1000Mi'
+          name: cache
+      containers:
+        - name: nginx-container
+          image: my-registry-url.io/nginx:latest
+          imagePullPolicy: Always
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: "nginx"
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "localhost:4317"
+          - name: OTEL_TRACES_SAMPELR
+            value: "AlwaysOff"
+          - name: OTEL_TRACES_SAMPLER_RATIO
+            value: "0.1"
+          - name: OTEL_TRACES_SAMPLER_PARENT_BASED
+            value: "false"
+          volumeMounts:
+            
+            - name: nginx-base-config
+              mountPath: "/etc/nginx/log_format.conf"
+              subPath: log_format.conf
+                
+            - mountPath: /etc/nginx/conf.d/default.conf
+              name: nginx-config
+              subPath: default.conf
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-config
+              subPath: nginx.conf
+            - mountPath: /etc/nginx/nginx.mapproxy.conf
+              name: nginx-config
+              subPath: nginx.mapproxy.conf
+            - mountPath: /etc/nginx/nginx.mapproxy.wmts.conf
+              name: nginx-config
+              subPath: nginx.mapproxy.wmts.conf
+            - mountPath: /cache
+              name: cache 
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 60
+            httpGet:
+              path: /nginx_status
+              port: 8081
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: mapproxy/templates/mapproxy/mapproxy-wms-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdaf-wms-deployment
+  annotations:
+    collectord.io/index: ""
+    collectord.io/output: splunk
+  labels:
+    app: mapproxy
+    component: mapproxy
+    environment: development
+    release: sdaf
+    helm.sh/chart: mapproxy-1.0.0
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mapproxy-wms
+      release: sdaf-wms
+      run: sdaf-mapproxy-wms
+      app.kubernetes.io/name: mapproxy-wms
+      app.kubernetes.io/instance: sdaf-wms
+  template:
+    metadata:
+      labels:
+        app: mapproxy-wms
+        release: sdaf-wms
+        run: sdaf-mapproxy-wms
+        app.kubernetes.io/name: mapproxy-wms
+        app.kubernetes.io/instance: sdaf-wms
+      annotations:
+        checksum/configmap: 33fb481a0a5bb448fc8b3132d01511d8802f5781477fec3fb9bf1df04cfa8c5c
+    spec:
+      imagePullSecrets:
+        - name: "my-registry-secret"
+      initContainers:
+        ######################################################### Init Container Deployment #########################################################
+        - name: init-mapproxy
+          image: my-registry-url.io/mapproxinator:latest
+          imagePullPolicy: Always
+          env:
+            - name: INIT_MODE
+              value: "true"
+            - name: LOG_LEVEL
+              value: warn
+            - name: UPDATED_TIME_JSON_FILE_PATH
+              value: /mapproxy/updated_time.json
+            - name: YAML_DESTINATION_FILE_PATH
+              value: /app/downloads/mapproxy.yaml  
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: sdaf-init-configmap
+          volumeMounts:
+            - mountPath: /app/downloads
+              name: mapproxy-config
+          ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      containers:
+        ######################################################### MapProxy Deployment #########################################################
+        - name: mapproxy
+          image: my-registry-url.io/docker-mapproxy:latest
+          imagePullPolicy: Always 
+          env:
+            - name: SOCKET_CONNECTION_TIMEOUT_SECONDS
+              value: "0.1"
+            - name: SOCKET_TIMEOUT_SECONDS
+              value: "0.1"
+          envFrom:
+            - configMapRef:
+                name: sdaf-configmap
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+          - name: shared-config
+            mountPath: /uwsgi_config
+          - mountPath: /mapproxy/mapproxy.yaml
+            name: mapproxy-config
+            subPath: mapproxy.yaml
+          - mountPath: "/mapproxy/uwsgi.ini"
+            name: uwsgi-config
+            subPath: uwsgi.ini
+          - mountPath: "/mapproxy/log.ini"
+            name: uwsgi-config
+            subPath: log.ini
+          - mountPath: /layerSources
+            name: sources-storage
+            subPath: tiles
+          ports:
+            - name: uwsgi
+              containerPort: 3031
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /service?REQUEST=GetCapabilities&SERVICE=WMTS
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+        ######################################################### Mapproxinator Deployment #########################################################
+        - name: mapproxinator
+          image: my-registry-url.io/mapproxinator:latest
+          imagePullPolicy: Always
+          env:
+            - name: INIT_MODE
+              value: "false"
+            - name: UPDATED_TIME_JSON_FILE_PATH
+              value: /mapproxy/updated_time.json
+            - name: YAML_DESTINATION_FILE_PATH
+              value: /mapproxy/mapproxy.yaml
+            - name: UWSGI_FIFO_FILE_PATH
+              value: /uwsgi_config/fifo0 
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: sdaf-mapproxinator-configmap
+          volumeMounts:
+            - name: shared-config
+              mountPath: /uwsgi_config
+            - mountPath: /mapproxy/mapproxy.yaml
+              name: mapproxy-config
+              subPath: mapproxy.yaml
+            - mountPath: /mapproxy/updated_time.json
+              name: mapproxy-config
+              subPath: updated_time.json
+            - mountPath: "/mapproxy/uwsgi.ini"
+              name: uwsgi-config
+              subPath: uwsgi.ini
+            - mountPath: "/mapproxy/log.ini"
+              name: uwsgi-config
+              subPath: log.ini
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 60
+            httpGet:
+              path: /liveness
+              port: 8081
+         ######################################################### uwsgi Deployment #########################################################
+        - name: uwsgi-exporter
+          image: my-registry-url.io/timonwong/uwsgi-exporter:latest
+          imagePullPolicy: Always 
+          args:
+            - "--stats.uri=http://localhost:1717"
+            - "--log.level=info"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: "/-/healthy"
+              port: "uwsgimetrics"
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: "/metrics"
+              port: "uwsgimetrics"
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          ports:
+            - name: "uwsgimetrics"
+              containerPort: 9117
+      volumes:
+        - name: mapproxy-config
+          emptyDir: {}
+        - name: shared-config
+          emptyDir: {}
+        - name: uwsgi-config
+          configMap:
+            name: sdaf-init-configmap
+            items:
+            - key: "UWSGI_INI"
+              path: "uwsgi.ini"
+            - key: "LOG_INI"
+              path: "log.ini"
+        - name: sources-storage
+          persistentVolumeClaim:
+            claimName: internal-pvc
+---
+# Source: mapproxy/templates/mapproxy/mapproxy-wmts-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdaf-wmts-deployment
+  annotations:
+    collectord.io/index: ""
+    collectord.io/output: splunk
+  labels:
+    app: mapproxy
+    component: mapproxy
+    environment: development
+    release: sdaf
+    helm.sh/chart: mapproxy-1.0.0
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mapproxy-wmts
+      release: sdaf-wmts
+      run: sdaf-mapproxy-wmts
+      app.kubernetes.io/name: mapproxy-wmts
+      app.kubernetes.io/instance: sdaf-wmts
+  template:
+    metadata:
+      labels:
+        app: mapproxy-wmts
+        release: sdaf-wmts
+        run: sdaf-mapproxy-wmts
+        app.kubernetes.io/name: mapproxy-wmts
+        app.kubernetes.io/instance: sdaf-wmts
+      annotations:
+        checksum/configmap: 33fb481a0a5bb448fc8b3132d01511d8802f5781477fec3fb9bf1df04cfa8c5c
+    spec:
+      imagePullSecrets:
+        - name: "my-registry-secret"
+      initContainers:
+        ######################################################### Init Container Deployment #########################################################
+        - name: init-mapproxy
+          image: my-registry-url.io/mapproxinator:latest
+          imagePullPolicy: Always
+          env:
+            - name: INIT_MODE
+              value: "true"
+            - name: LOG_LEVEL
+              value: warn
+            - name: UPDATED_TIME_JSON_FILE_PATH
+              value: /mapproxy/updated_time.json
+            - name: YAML_DESTINATION_FILE_PATH
+              value: /app/downloads/mapproxy.yaml  
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: sdaf-init-configmap
+          volumeMounts:
+            - mountPath: /app/downloads
+              name: mapproxy-config
+          ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      containers:
+        ######################################################### MapProxy Deployment #########################################################
+        - name: mapproxy
+          image: my-registry-url.io/docker-mapproxy:latest
+          imagePullPolicy: Always 
+          env:
+            - name: SOCKET_CONNECTION_TIMEOUT_SECONDS
+              value: "0.1"
+            - name: SOCKET_TIMEOUT_SECONDS
+              value: "0.1"
+          envFrom:
+            - configMapRef:
+                name: sdaf-configmap
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+          - name: shared-config
+            mountPath: /uwsgi_config
+          - mountPath: /mapproxy/mapproxy.yaml
+            name: mapproxy-config
+            subPath: mapproxy.yaml
+          - mountPath: "/mapproxy/uwsgi.ini"
+            name: uwsgi-config
+            subPath: uwsgi.ini
+          - mountPath: "/mapproxy/log.ini"
+            name: uwsgi-config
+            subPath: log.ini
+          - mountPath: /layerSources
+            name: sources-storage
+            subPath: tiles
+          ports:
+            - name: uwsgi
+              containerPort: 3031
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /service?REQUEST=GetCapabilities&SERVICE=WMTS
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+        ######################################################### Mapproxinator Deployment #########################################################
+        - name: mapproxinator
+          image: my-registry-url.io/mapproxinator:latest
+          imagePullPolicy: Always
+          env:
+            - name: INIT_MODE
+              value: "false"
+            - name: UPDATED_TIME_JSON_FILE_PATH
+              value: /mapproxy/updated_time.json
+            - name: YAML_DESTINATION_FILE_PATH
+              value: /mapproxy/mapproxy.yaml
+            - name: UWSGI_FIFO_FILE_PATH
+              value: /uwsgi_config/fifo0 
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sdaf-postgres-secret
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: sdaf-mapproxinator-configmap
+          volumeMounts:
+            - name: shared-config
+              mountPath: /uwsgi_config
+            - mountPath: /mapproxy/mapproxy.yaml
+              name: mapproxy-config
+              subPath: mapproxy.yaml
+            - mountPath: /mapproxy/updated_time.json
+              name: mapproxy-config
+              subPath: updated_time.json
+            - mountPath: "/mapproxy/uwsgi.ini"
+              name: uwsgi-config
+              subPath: uwsgi.ini
+            - mountPath: "/mapproxy/log.ini"
+              name: uwsgi-config
+              subPath: log.ini
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 60
+            httpGet:
+              path: /liveness
+              port: 8081
+         ######################################################### uwsgi Deployment #########################################################
+        - name: uwsgi-exporter
+          image: my-registry-url.io/timonwong/uwsgi-exporter:latest
+          imagePullPolicy: Always 
+          args:
+            - "--stats.uri=http://localhost:1717"
+            - "--log.level=info"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: "/-/healthy"
+              port: "uwsgimetrics"
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: "/metrics"
+              port: "uwsgimetrics"
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          ports:
+            - name: "uwsgimetrics"
+              containerPort: 9117
+      volumes:
+        - name: mapproxy-config
+          emptyDir: {}
+        - name: shared-config
+          emptyDir: {}
+        - name: uwsgi-config
+          configMap:
+            name: sdaf-init-configmap
+            items:
+            - key: "UWSGI_INI"
+              path: "uwsgi.ini"
+            - key: "LOG_INI"
+              path: "log.ini"
+        - name: sources-storage
+          persistentVolumeClaim:
+            claimName: internal-pvc
+---
+# Source: mapproxy/charts/nginx/templates/route.yaml
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sdaf-nginx-route
+  annotations:
+spec:
+  path:  /
+  port:
+    targetPort: nginx
+  to:
+    kind: Service
+    name: sdaf-nginx-service
+  tls:
+    termination: "edge"
+    insecureEdgeTerminationPolicy: "Redirect"

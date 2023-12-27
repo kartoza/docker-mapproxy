@@ -1,4 +1,4 @@
-{{- if .Values.rasterCommon.authentication.opa.enabled }}
+{{- if and (.Values.rasterCommon.authentication.opa.enabled) (not .Values.nginx.enabledOpala) }}
 {{- $chartName := include "mapproxy.name" . -}}
 {{- $releaseName := .Release.Name -}}
 kind: ConfigMap

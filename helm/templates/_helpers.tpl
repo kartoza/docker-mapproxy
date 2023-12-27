@@ -1,3 +1,5 @@
+{{- $releaseName := .Release.Name -}}
+
 {{/*
 Expand the name of the chart.
 */}}

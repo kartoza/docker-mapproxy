@@ -11,9 +11,11 @@ metadata:
     environment: {{ .Values.environment }}
     release: {{ $releaseName }}
 data:
-  NGINX_CONFIG: {{ tpl (.Files.Get "config/nginx.conf") . | quote }}
-  NGINX_ROOT_CONFIG: {{ .Files.Get "config/nginx_root.conf" | quote }}
+  NGINX_CONFIG: {{ tpl (.Files.Get "config/default.conf") . | quote }}
+  NGINX_ROOT_CONFIG: {{ .Files.Get "config/nginx.conf" | quote }}
   NGINX_MAPPROXY_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.conf") . | quote }}
   NGINX_MAPPROXY_WMTS_CONFIG: {{ tpl (.Files.Get "config/nginx.mapproxy.wmts.conf") . | quote }}
+  {{- if and (not .Values.nginx.enabledOpala) (.Values.nginx.authorization.enabled) }}
   JWT_JS: {{ tpl (.Files.Get "config/jwt.js") . | quote }}
+  {{- end }}
 {{- end }}

@@ -24,7 +24,7 @@
       {{- if .Values.resetOnConfigChange }}
       annotations:
         checksum/configmap: {{
-          include (print $.Template.BasePath "/mapproxy-configmap.yaml") . | sha256sum }}
+          include (print $.Template.BasePath "/mapproxy/mapproxy-configmap.yaml") . | sha256sum }}
         {{- if .Values.env.metrics.enabled }}
         prometheus.io/port: {{ .Values.mapproxy.env.metrics.prometheus.port | quote }}
         prometheus.io/scrape: {{ .Values.mapproxy.env.metrics.prometheus.scrape | quote }}
