@@ -85,7 +85,7 @@ static_resources:
                   address:
                     socket_address:
                       address: 127.0.0.1
-                      port_value: {{ .Values.nginx.targetPort }}
+                      port_value: {{ .Values.nginx.nginxTargetPort }}
 admin:
   access_log_path: "/dev/null"
   address:

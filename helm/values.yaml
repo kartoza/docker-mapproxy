@@ -12,6 +12,7 @@ global:
   environment: {}
   authentication:
     jwtPublicKeySecretName: map-colonies-jwks
+  enabledOpala: false
 
 authentication:
   ca:
@@ -23,38 +24,37 @@ authentication:
     useExternal: false
     externalSecretName: ""
 
-# opa:
-#   image: openpolicyagent/opa
-#   imageTag: 0.29.4-envoy-3
-#   port: 9191
-#   enableLogging: false
-#   resources:
-#     enabled: true
-#     value:
-#       limits:
-#         cpu: 100m
-#         memory: 128Mi
-#       requests:
-#         cpu: 100m
-#         memory: 128Mi
-# envoy:
-#   image: envoyproxy/envoy
-#   imageTag: v1.20.7
-#   port: 8000
-#   maxRequestBytes: 8192
-#   requestedDomain: raster
-#   resources:
-#     enabled: true
-#     value:
-#       limits:
-#         cpu: 100m
-#         memory: 128Mi
-#       requests:
-#         cpu: 100m
-#         memory: 128Mi
+opa:
+  image: openpolicyagent/opa
+  imageTag: 0.29.4-envoy-3
+  port: 9191
+  enableLogging: false
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+envoy:
+  image: envoyproxy/envoy
+  imageTag: v1.20.7
+  port: &envoyPort 8000
+  maxRequestBytes: 8192
+  requestedDomain: raster
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
 
 rasterCommon:
-  enabledOpala: false
   ca:
     secretName: ""
     path: "/usr/local/share/ca-certificates"
@@ -249,43 +249,45 @@ nginx:
     useTempPath: "off"
   port: 8080
   internalServicePort: 80
-  targetPort: 8080
+  nginxTargetPort: &nginxTargetPort 8080
+  targetPort: *envoyPort # if global.enabledOpala is true use *nginxTargetPort else use *envoyPort
   nodePort: 30003
-  enabledOpala: true
-  envoy:
-    image: envoyproxy/envoy
-    imageTag: v1.20.7
-    port: 8000
-    maxRequestBytes: 8192
-    requestedDomain: raster
-    resources:
-      enabled: true
-      value:
-        limits:
-          cpu: 100m
-          memory: 128Mi
-        requests:
-          cpu: 100m
-          memory: 128Mi
-  opa:
-    image: openpolicyagent/opa
-    imageTag: 0.29.4-envoy-3
-    port: 9191
-    enableLogging: false
-    resources:
-      enabled: true
-      value:
-        limits:
-          cpu: 100m
-          memory: 128Mi
-        requests:
-          cpu: 100m
-          memory: 128Mi
+  # envoy:
+  #   image: envoyproxy/envoy
+  #   imageTag: v1.20.7
+  #   port: &envoyPort 8000
+  #   maxRequestBytes: 8192
+  #   requestedDomain: raster
+  #   resources:
+  #     enabled: true
+  #     value:
+  #       limits:
+  #         cpu: 100m
+  #         memory: 128Mi
+  #       requests:
+  #         cpu: 100m
+  #         memory: 128Mi
+  # opa:
+  #   image: openpolicyagent/opa
+  #   imageTag: 0.29.4-envoy-3
+  #   jwtPublicKeySecretName: map-colonies-jwks
+  #   secretName: docker-mapproxy-nginx-opa
+  #   port: 9191
+  #   enableLogging: false
+  #   resources:
+  #     enabled: true
+  #     value:
+  #       limits:
+  #         cpu: 100m
+  #         memory: 128Mi
+  #       requests:
+  #         cpu: 100m
+  #         memory: 128Mi
 
   authorization:
     enabled: true
-    url: http://opa-service.infra-services/v1/data/http/authz/decision
-    domain: ""
+    url: http://opa-int-opa-service.infra-services/v1/data/http/authz/decision
+    domain: "raster"
     wmsDomain: "rasterWms"
     wmtsDomain: "raster"
 
@@ -306,16 +308,27 @@ nginx:
       name: nginx-config
       subPath: nginx.conf
     - name: nginx-config
+      mountPath: "/etc/nginx/log_format.conf"
+      subPath: log_format.conf
+    - name: nginx-config
       mountPath: "/etc/nginx/nginx.mapproxy.conf"
       subPath: nginx.mapproxy.conf
     - mountPath: "/etc/nginx/nginx.mapproxy.wmts.conf"
       name: nginx-config
       subPath: nginx.mapproxy.wmts.conf
-    - mountPath: "/cache"
-      name: cache
+    - name: cache
+      mountPath: "/cache"
+    - name: proxy-config
+      mountPath: /config
+    # - name: opa-policy
+    #   secret:
+    #     secretName: {{ .Values.secretName }}
+    # - name: jwt-public-keys
+    #   secret:
+    #     secretName: {{ .Values.jwtPublicKeySecretName }}
   
   sidecars: |-
-    {{- if not .Values.enabledOpala }}
+    {{- if not .Values.global.enabledOpala }}
     - name: envoy
       image: {{ .Values.envoy.image }}:{{ .Values.envoy.imageTag }}
       volumeMounts:
