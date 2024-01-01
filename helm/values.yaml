@@ -274,6 +274,10 @@ mapproxinator:
     poll:
       timeout:
         frequencyMS: 5000
+    gracefulReloadMaxSeconds: 300
+    logPrettyPrintEnabled: false
+    responseCompressionEnabled: true
+    requestPayloadLimit: 1mb
     ssl: # external paths
       CA_DIR: /opt/certs/ca/
       KEY_DIR: /opt/certs/key/
