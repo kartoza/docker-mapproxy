@@ -32,7 +32,7 @@ ENV \
     # Set telemetry endpoint
     TELEMETRY_ENDPOINT='localhost:4317' \
     OTEL_RESOURCE_ATTRIBUTES='service.name=mapcolonies,application=mapproxy' \
-    OTEL_SERVICE_NAME='mapproxy' \
+    OTEL_SERVICE_NAME='mapproxy' 
 
 ADD uwsgi.ini /settings/uwsgi.default.ini
 ADD start.sh /start.sh
