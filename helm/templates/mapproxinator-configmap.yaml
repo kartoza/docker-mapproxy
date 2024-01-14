@@ -28,6 +28,7 @@ data:
   SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}
   CONFIG_PROVIDER: {{ .Values.rasterCommon.storage.mapproxyConfigProvider | quote }}
   POLL_TIMEOUT_FREQUENCY_MS: {{ .Values.mapproxinator.env.poll.timeout.frequencyMS | quote }}
+  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.mapproxinator.env.gracefulReloadMaxSeconds | quote }}
   S3_ENDPOINT_URL: {{ .Values.rasterCommon.storage.s3.endpointUrl | quote }}
   S3_BUCKET: {{ .Values.rasterCommon.storage.s3.tilesBucket | quote }}
   S3_SSL_ENABLED: {{ .Values.rasterCommon.storage.s3.sslEnabled | quote }}
