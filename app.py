@@ -49,10 +49,10 @@ if(os.environ.get('AUTH_ENABLED', 'false').lower() == 'true'):
     application = AuthFilter(application,os.environ.get('AUTH_VALID_DOMAIN'),os.environ.get('AUTH_HEADER_NAME'),os.environ.get('AUTH_QUERY_NAME'))
 
 # Get telemetry endpoint from env
-endpoint = os.environ.get('TELEMETRY_ENDPOINT', 'localhost:4317')
+endpoint = os.environ.get('TELEMETRY_TRACING_ENDPOINT', 'localhost:4317')
 tracing_enabled = os.environ.get('TELEMETRY_TRACING_ENABLED', 'false')
 sampling_ratio_denominator = int(os.environ.get(
-    'TELEMETRY_SAMPLING_RATIO_DENOMINATOR', '1000'))
+    'TELEMETRY_TRACING_SAMPLING_RATIO_DENOMINATOR', '1000'))
 
 if tracing_enabled.strip().lower() == 'true':
     # Create span exporter

@@ -10,85 +10,75 @@ global:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  environment: {}
+  environment: ""
   authentication:
     jwtPublicKeySecretName: map-colonies-jwks
+  opalaEnabled: false
+  storage:
+    tilesStorageProvider: ""
+    mapproxyConfigProvider: ""
+    fs:
+      internalPvc:
+        enabled: false
+        name: ""
+        tilesSubPath: ""
+    s3:
+      endpointUrl: ""
+      tilesBucket: ""
+      sslEnabled: false
+      secretName: ""
+  db:
+    host: ""
+    name: ""
+    port: 5432
+    sslEnabled: false
+    schema: ""
+    rejectUnauthorized: false
+    secrets:
+      useExternal: false
+      externalSecretName: ""
+  ca:
+    secretName: "root-ca"
+    path: "/usr/local/share/ca-certificates"
+    key: "ca.crt"
 
 authentication:
-  ca:
-    enabled: false
-    useExternal: false
-    externalSecretName: ""
   ssl:
     enabled: false
     useExternal: false
     externalSecretName: ""
 
-opa:
-  image: openpolicyagent/opa
-  imageTag: 0.29.4-envoy-3
-  port: 9191
-  enableLogging: false
-  resources:
-    enabled: true
-    value:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-envoy:
-  image: envoyproxy/envoy
-  imageTag: v1.20.7
-  port: 8000
-  maxRequestBytes: 8192
-  requestedDomain: raster
-  resources:
-    enabled: true
-    value:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
-rasterCommon:
-  ca:
-    secretName: ""
-    path: "/usr/local/share/ca-certificates"
-    key: "ca.crt"
-  authentication:
-    opa:
+storage:
+  tilesStorageProvider: ""
+  mapproxyConfigProvider: ""
+  fs:
+    internalPvc:
       enabled: false
-      customHeaderName: ""
-  db:
-    host: "localhost"
-    name: "raster"
-    port: 5432
+      name: ""
+      tilesSubPath: ""
+  s3:
+    endpointUrl: ""
+    tilesBucket: ""
     sslEnabled: false
-    rejectUnauthorized: false
-    secrets:
-      useExternal: false
-      externalSecretName: ""
-  storage:
-    tilesStorageProvider: "FS"
-    mapproxyConfigProvider: db
-    fs:
-      internalPvc:
-        enabled: true
-        name: internal-pvc
-        tilesSubPath: tiles
-    s3:
-      enabled: false
-      endpointUrl: "http://localhost:9000"
-      tilesBucket: "raster"
-      forcePathStyle: true
-      sslEnabled: false
-      virtualHosting: false
-      awsHttps: false
-      secretName: raster-config-s3-secret
+    secretName: ""
+
+db:
+  host: ""
+  name: ""
+  port: 5432
+  sslEnabled: false
+  schema: ""
+  rejectUnauthorized: false
+  secrets:
+    useExternal: false
+    externalSecretName: ""
+
+# add pod annotations
+# example:
+# podAnnotations:
+  # annotation1: annotation-value-1
+  # annotation2: annotation-value-2
+podAnnotations: {}
 
 environment: development
 initialDelaySeconds: 60
@@ -116,7 +106,7 @@ mapproxy:
     connectionTimeoutSeconds: 0.1 # Set a connection timeout, nonnegative floating point number expressing *seconds*.
     timeoutSeconds: 0.1 # Set a operation timeout nonnegative, floating point number expressing *seconds*.
   wms:
-    enabled: true
+    enabled: false
     replicaCount: 1
     resources:
       enabled: true
@@ -158,18 +148,12 @@ mapproxy:
     statsServer:
       stats: 1717
       statsMinify: true
+
   env:
     cors:
       enabled: true
       allowedOrigin: "*"
       allowedHeaders: ""
-    authentication:
-      WMS:
-        enabled: true
-        requiredDomain: raster_wms
-      token:
-        queryName: token
-        headerNameOverride: #will use "rasterCommon.authentication.opa.customHeaderName" if not specified
     ssl: # external paths
       CA_DIR: /opt/certs/ca/
       KEY_DIR: /opt/certs/key/
@@ -188,23 +172,6 @@ mapproxy:
         scrape: true
         port: 9117
       enabled: true
-  route:
-    enabled: true
-    host:
-    path: /api/raster/v1
-    https: true
-    useCert: false
-    timeout:
-      enabled: false # defaults to 30s by openshift
-      duration: 60s # supported units (us, ms, s, m, h, d)
-  ingress:
-    enabled: false
-    type: "nginx-org" # supported values: 'nginx-org' | 'nginx-kubernetes'
-    path: /api/raster/v1
-    host: "localhost"
-    tls:
-      enabled: true
-      useExternal: ""
 
 initContainer:
   image:
@@ -231,6 +198,11 @@ initContainer:
 
 nginx:
   enabled: true
+  fullnameOverride: ""
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: "latest"
   volume:
     storage: 1000Mi
     accessModes: ReadWriteOnce
@@ -244,14 +216,171 @@ nginx:
     inactive: 60m
     expirationTime: 60m
     useTempPath: "off"
-  replicaCount: 1
-  image:
-    repository: nginx
-    tag: "latest"
+  envoy:
+    image: envoyproxy/envoy
+    imageTag: v1.20.7
+    port: &envoyPort 8000
+    maxRequestBytes: 8192
+    requestedDomain: raster
+    resources:
+      enabled: true
+      value:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+  opa:
+    image: openpolicyagent/opa
+    imageTag: 0.29.4-envoy-3
+    port: 9191
+    jwtPublicKeySecretName: map-colonies-jwks
+    customHeaderName: "x-api-key"
+    secretName: docker-mapproxy-nginx-opa
+    enableLogging: false
+    logLevel: warn
+    resources:
+      enabled: true
+      value:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
   port: 8080
   internalServicePort: 80
-  targetPort: 8080
+  nginxTargetPort: &nginxTargetPort 8080
+  targetPort: *envoyPort  # --> if global.opalaEnabled is true use *nginxTargetPort else use *envoyPort | if no authorization is needed use *nginxTargetPort
   nodePort: 30003
+
+  authorization:
+    enabled: true
+    url: http://opa-int-opa-service.infra-services/v1/data/http/authz/decision
+    token:
+      queryName: token
+    wms:
+      enabled: true
+      domain: "rasterWms"
+    wmts:
+      domain: "raster"
+
+  extraVolumes:
+    - name: nginx-config
+      configMap:
+        name: "{{ .Release.Name }}-nginx-configmap"
+    - name: cache #TODO: Find solution to mount cache volume with condition
+      emptyDir:
+        sizeLimit: "{{ .Values.volume.storage }}"
+        medium: "Memory"
+    - name: proxy-config
+      configMap:
+        name: "{{ .Release.Name }}-mapproxy-envoy"
+    - name: opa-policy
+      secret:
+        secretName: "{{ .Release.Name }}-opa"
+    - name: jwt-public-keys
+      secret:
+        secretName: "{{ .Values.global.authentication.jwtPublicKeySecretName }}"
+
+  extraVolumeMounts:
+    - name: nginx-config
+      mountPath: "/etc/nginx/conf.d/default.conf"
+      subPath: default.conf
+    - name: nginx-config
+      mountPath: "/etc/nginx/nginx.conf"
+      subPath: nginx.conf
+    - name: nginx-config
+      mountPath: "/etc/nginx/log_format.conf"
+      subPath: log_format.conf
+    - name: nginx-config
+      mountPath: "/etc/nginx/nginx.mapproxy.conf"
+      subPath: nginx.mapproxy.conf
+    - name: nginx-config
+      mountPath: "/etc/nginx/nginx.mapproxy.wmts.conf"
+      subPath: nginx.mapproxy.wmts.conf
+    - name: cache
+      mountPath: "/cache"
+  
+  sidecars: |-
+    {{- if and (not .Values.global.opalaEnabled) (.Values.authorization.enabled) }}
+    - name: envoy
+      image: {{ .Values.envoy.image }}:{{ .Values.envoy.imageTag }}
+      volumeMounts:
+      - name: proxy-config
+        readOnly: true
+        mountPath: /config
+      - name: jwt-public-keys
+        readOnly: true
+        mountPath: /keys/mapColonies.jwks
+        subPath: mapColonies.jwks
+      args:
+      - "envoy"
+      - "--config-path"
+      - "/config/envoy.yaml"
+      ports:
+      - name: http
+        containerPort: 8000
+        protocol: TCP
+      {{- if .Values.envoy.resources.enabled }}
+      resources:
+        {{- toYaml .Values.envoy.resources.value | nindent 4 }}
+      {{- end }}
+    - name: opa
+      image: "{{ .Values.opa.image }}:{{ .Values.opa.imageTag }}"
+      volumeMounts:
+      - readOnly: true
+        mountPath: /policy
+        name: opa-policy
+      args:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--diagnostic-addr=0.0.0.0:8282"
+      - "--set=plugins.envoy_ext_authz_grpc.add=:{{ .Values.opa.imageTag }}"
+      - "--set=plugins.envoy_ext_authz_grpc.path=envoy/authz/allow"
+      {{- if .Values.opa.enableLogging }}
+      - "--set=decision_logs.console=true"
+      {{- end }}
+      - "/policy/policy.rego"
+      {{- if .Values.opa.resources.enabled }}
+      resources:
+        {{- toYaml .Values.opa.resources.value | nindent 12 }}
+      {{- end }}
+      livenessProbe:
+        httpGet:
+          path: /health?plugins
+          port: 8282
+        initialDelaySeconds: 5
+        periodSeconds: 30
+      readinessProbe:
+        httpGet:
+          path: /health?plugins
+          port: 8282
+        initialDelaySeconds: 5
+        periodSeconds: 30
+      {{- end }}
+
+  route:
+    enabled: true
+    host:
+    path: /api/raster/v1
+    https: true
+    useCert: false
+    timeout:
+      enabled: false # defaults to 30s by openshift
+      duration: 60s # supported units (us, ms, s, m, h, d)
+  ingress:
+    enabled: false
+    type: "nginx-org" # supported values: 'nginx-org' | 'nginx-kubernetes'
+    path: /api/raster/v1
+    host: "localhost"
+    tls:
+      enabled: true
+      useExternal: ""
+      
   resources:
     enabled: true
     value:

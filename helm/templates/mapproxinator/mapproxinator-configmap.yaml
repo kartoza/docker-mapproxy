@@ -1,12 +1,17 @@
 {{- if .Values.mapproxinator.enabled -}}
 {{- $chartName := include "mapproxy.name" . -}}
 {{- $releaseName := .Release.Name -}}
+{{- $mapproxinatorConfigmapName := include "mapproxinator-configmap.fullname" . -}}
+{{- $db := (include "common.db.merged" .) | fromYaml }}
+{{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+{{- $storage := (include "common.storage.merged" .) | fromYaml }}
 {{- $metricsUrl := include "mapproxy.metricsUrl" . -}}
 {{- $tracingUrl := include "mapproxy.tracingUrl" . -}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $releaseName }}-mapproxinator-configmap
+  name: {{ $mapproxinatorConfigmapName }}
   labels:
     app: {{ $releaseName }}-{{ $chartName }}
     component: mapproxinator-configmap
@@ -26,18 +31,18 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
   SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}
-  CONFIG_PROVIDER: {{ .Values.rasterCommon.storage.mapproxyConfigProvider | quote }}
+  CONFIG_PROVIDER: {{ $storage.mapproxyConfigProvider | quote }}
   POLL_TIMEOUT_FREQUENCY_MS: {{ .Values.mapproxinator.env.poll.timeout.frequencyMS | quote }}
   GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.mapproxinator.env.gracefulReloadMaxSeconds | quote }}
-  S3_ENDPOINT_URL: {{ .Values.rasterCommon.storage.s3.endpointUrl | quote }}
-  S3_BUCKET: {{ .Values.rasterCommon.storage.s3.tilesBucket | quote }}
-  S3_SSL_ENABLED: {{ .Values.rasterCommon.storage.s3.sslEnabled | quote }}
-  DB_HOST: {{ .Values.rasterCommon.db.host | quote }}
-  DB_NAME: {{ .Values.rasterCommon.db.name | quote }}
-  DB_SCHEMA: {{ .Values.mapproxy.db.schema | quote }}
-  DB_PORT: {{ .Values.rasterCommon.db.port | quote }}
-  DB_SSL_ENABLE: {{ .Values.rasterCommon.db.sslEnabled | quote }}
-  DB_SSL_REJECT_UNAUTHORIZED: {{ .Values.rasterCommon.db.rejectUnauthorized | quote }}
+  S3_ENDPOINT_URL: {{ $s3.endpointUrl }}
+  S3_BUCKET: {{ $s3.tilesBucket }}
+  S3_SSL_ENABLED: {{ $s3.sslEnabled | quote }}
+  DB_HOST: {{ $db.host }}
+  DB_NAME: {{ $db.name }}
+  DB_SCHEMA: {{ $db.schema }}
+  DB_PORT: {{ $db.port | quote }}
+  DB_SSL_ENABLE: {{ $db.sslEnabled | quote }}
+  DB_SSL_REJECT_UNAUTHORIZED: {{ $db.rejectUnauthorized | quote }}
   DB_SSL_PATH_CA: {{ .Values.mapproxinator.env.ssl.CA_FILE_LOCATION }}
   DB_SSL_PATH_KEY: {{ .Values.mapproxinator.env.ssl.KEY_FILE_LOCATION }}
   DB_SSL_PATH_CERT: {{ .Values.mapproxinator.env.ssl.CERT_FILE_LOCATION }}

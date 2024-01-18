@@ -1,10 +1,13 @@
 {{- define "mapproxy-chart.mapproxy-bundle" }}
+  {{- $db := (include "common.db.merged" .) | fromYaml }}
+  {{- $fs := (include "common.fs.merged" .) | fromYaml }}
+  {{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+  {{- $initConfigmapName := include "init-configmap.fullname" . -}}
   {{- $cloudProviderDockerRegistryUrl := include "mapproxy.cloudProviderDockerRegistryUrl" . -}}
   {{- $cloudProviderImagePullSecretName := include "mapproxy.cloudProviderImagePullSecretName" . -}}
-  {{- $caSecretName := ternary .Values.authentication.ca.externalSecretName (printf "%s%s" .Release.Name "-root-ca") .Values.authentication.ca.useExternal }}
   {{- $sslSecretName := ternary .Values.authentication.ssl.externalSecretName (printf "%s%s" .Release.Name "-open-ssl") .Values.authentication.ssl.useExternal }}
-  {{- $postgresSecretName := ternary .Values.rasterCommon.db.secrets.externalSecretName (printf "%s%s" .Release.Name "-postgres-secret") .Values.rasterCommon.db.secrets.useExternal }}
-  {{- $s3SecretName := ternary .Values.rasterCommon.storage.s3.secretName (printf "%s%s" .Release.Name  "-s3-secret") (ne .Values.rasterCommon.storage.s3.secretName "") }}
+  {{- $postgresSecretName := ternary $db.secrets.externalSecretName (printf "%s%s" .Release.Name "-postgres-secret") $db.secrets.useExternal }}
+  {{- $s3SecretName := ternary $s3.secretName (printf "%s%s" .Release.Name  "-s3-secret") (ne $s3.secretName "") }}
   replicas: {{ .replicaCount }}
   selector:
     matchLabels:
@@ -21,15 +24,18 @@
         run: {{ .releaseName }}-{{ .chartName }}-{{ .type }}
         app.kubernetes.io/name: {{ include "mapproxy.name" . }}-{{ .type }}
         app.kubernetes.io/instance: {{ .releaseName }}-{{ .type }}
-      {{- if .Values.resetOnConfigChange }}
       annotations:
+        {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{
-          include (print $.Template.BasePath "/mapproxy-configmap.yaml") . | sha256sum }}
+          include (print $.Template.BasePath "/mapproxy/mapproxy-configmap.yaml") . | sha256sum }}
+        {{- end }}
         {{- if .Values.env.metrics.enabled }}
         prometheus.io/port: {{ .Values.mapproxy.env.metrics.prometheus.port | quote }}
         prometheus.io/scrape: {{ .Values.mapproxy.env.metrics.prometheus.scrape | quote }}
         {{- end }}
-      {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
     {{- if $cloudProviderImagePullSecretName }}
       imagePullSecrets:
@@ -52,7 +58,7 @@
           emptyDir: {}
         - name: shared-config
           emptyDir: {}
-        {{- if .Values.rasterCommon.db.sslEnabled }}
+        {{- if $db.sslEnabled }}
         - name: ca-file
           secret:
             secretName: {{ $postgresSecretName }}
@@ -72,10 +78,10 @@
               - key: certFile
                 path: cert.pem
         {{- end }}    
-        {{- if .Values.rasterCommon.ca.secretName }}
+        {{- if .Values.global.ca.secretName }}
         - name: root-ca
           secret:
-            secretName: {{.Values.rasterCommon.ca.secretName }}
+            secretName: {{ .Values.global.ca.secretName }}
         {{- end }}                
         {{- if .Values.authentication.ssl.enabled }}
         - name: open-ssl
@@ -84,15 +90,15 @@
         {{- end }}
         - name: uwsgi-config
           configMap:
-            name: {{ .releaseName }}-init-configmap
+            name: {{ $initConfigmapName }}
             items:
             - key: "UWSGI_INI"
               path: "uwsgi.ini"
             - key: "LOG_INI"
               path: "log.ini"
-        {{- if .Values.rasterCommon.storage.fs.internalPvc.enabled }}
+        {{- if $fs.internalPvc.enabled }}
         - name: sources-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.rasterCommon.storage.fs.internalPvc.name }}
+            claimName: {{ $fs.internalPvc.name }}
         {{- end }}
 {{- end }}

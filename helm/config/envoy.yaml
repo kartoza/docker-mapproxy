@@ -3,7 +3,7 @@ static_resources:
     - address:
         socket_address:
           address: 0.0.0.0
-          port_value: {{ .Values.envoy.port }}
+          port_value: {{ .Values.nginx.envoy.port }}
       filter_chains:
         - filters:
             - name: envoy.http_connection_manager
@@ -37,7 +37,7 @@ static_resources:
                             filename: /keys/mapColonies.jwks
                           forward: true #keep the jwt (if header is used) for mapproxy WMS auth
                           from_headers:
-                            - name: {{ .Values.rasterCommon.authentication.opa.customHeaderName }}
+                            - name: {{ .Values.nginx.opa.customHeaderName }}
                           from_params:
                             - token
                           jwt_cache_config:
@@ -54,18 +54,18 @@ static_resources:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.set_metadata.v3.Config
                       metadata_namespace: map_colonies
                       value: 
-                        domain: {{ .Values.envoy.requestedDomain }}
+                        domain: {{ .Values.nginx.envoy.requestedDomain }}
                   - name: envoy.ext_authz
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
                       transport_api_version: V3
                       with_request_body:
-                        max_request_bytes: {{ .Values.envoy.maxRequestBytes }}
+                        max_request_bytes: {{ .Values.nginx.envoy.maxRequestBytes }}
                         allow_partial_message: true
                       failure_mode_allow: false
                       grpc_service:
                         google_grpc:
-                          target_uri: localhost:{{ .Values.opa.port }}
+                          target_uri: localhost:{{ .Values.nginx.opa.port }}
                           stat_prefix: ext_authz
                         timeout: 0.5s
                       metadata_context_namespaces:
@@ -85,7 +85,7 @@ static_resources:
                   address:
                     socket_address:
                       address: 127.0.0.1
-                      port_value: {{ .Values.nginx.targetPort }}
+                      port_value: {{ .Values.nginx.nginxTargetPort }}
 admin:
   access_log_path: "/dev/null"
   address:

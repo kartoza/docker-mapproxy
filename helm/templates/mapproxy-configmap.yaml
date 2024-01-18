@@ -16,7 +16,7 @@ data:
   AWS_HTTPS: {{ .Values.rasterCommon.storage.s3.awsHttps | quote }}
   TELEMETRY_TRACING_ENABLED: {{ .Values.global.tracing.enabled | quote }}
   TELEMETRY_TRACING_ENDPOINT: {{ .Values.global.tracing.url | quote }}
-  TELEMETRY_SAMPLING_RATIO_DENOMINATOR: {{ .Values.global.tracing.samplingRatioDenominator | quote }}
+  TELEMETRY_TRACING_SAMPLING_RATIO_DENOMINATOR: {{ .Values.global.tracing.samplingRatioDenominator | quote }}
   CORS_ENABLED: {{ .Values.mapproxy.env.cors.enabled | quote }}
   CORS_ALLOWED_HEADERS: {{ template "map-proxy.cors.allowedHeaders" . }}
   CORS_ALLOWED_ORIGIN: {{ .Values.mapproxy.env.cors.allowedOrigin | quote }}

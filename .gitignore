@@ -7,3 +7,5 @@ configuration/app.py
 city_cache/*.py
 .idea*
 helm/local*
+*.tgz
+*Chart.lock
