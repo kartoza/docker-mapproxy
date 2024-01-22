@@ -6,7 +6,6 @@ global:
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
-    samplingRatioDenominator: 1000
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
