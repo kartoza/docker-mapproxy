@@ -1,0 +1,30 @@
+{{- if .Values.mapproxy.enabled -}}
+{{- $chartName := include "mapproxy.name" . -}}
+{{- $releaseName := .Release.Name -}}
+{{- $configmapName := include "configmap.fullname" . -}}
+{{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $configmapName }}
+  labels:
+    app: {{ $releaseName }}-{{ $chartName }}
+    component: map-proxy-configmap
+    environment: {{ .Values.environment }}
+    release: {{ $releaseName }}
+data:
+  S3_ENDPOINT_URL: {{ $s3.endpointUrl }}
+  S3_BUCKET:  {{ $s3.tilesBucket }}
+  AWS_HTTPS: {{ $s3.sslEnabled | quote }}
+  TELEMETRY_TRACING_ENABLED: {{ .Values.global.tracing.enabled | quote }}
+  TELEMETRY_TRACING_ENDPOINT: {{ .Values.global.tracing.url | quote }}
+  CORS_ENABLED: {{ .Values.mapproxy.env.cors.enabled | quote }}
+  CORS_ALLOWED_HEADERS: {{ template "map-proxy.cors.allowedHeaders" . }}
+  CORS_ALLOWED_ORIGIN: {{ .Values.mapproxy.env.cors.allowedOrigin | quote }}
+  AUTH_ENABLED: {{ .Values.nginx.authorization.wms.domain | quote }}
+  {{ if and (not .Values.nginx.opalaEnabled) (.Values.nginx.authorization.wms.domain) }}
+  AUTH_VALID_DOMAIN: {{ .Values.nginx.authorization.wms.domain | quote }}
+  AUTH_HEADER_NAME: {{ .Values.nginx.opa.customHeaderName | quote }}
+  AUTH_QUERY_NAME: {{ .Values.nginx.authorization.token.queryName | quote }}
+  {{- end}}
+{{- end }}

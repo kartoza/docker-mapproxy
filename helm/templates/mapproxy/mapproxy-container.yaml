@@ -1,0 +1,79 @@
+{{- define "mapproxy-chart.mapproxy-container" }}
+{{- $configmapName := include "configmap.fullname" . -}}
+{{- $storage := (include "common.storage.merged" .) | fromYaml }}
+{{- $fs := (include "common.fs.merged" .) | fromYaml }}
+        - name: mapproxy
+          image: {{ .cloudProviderDockerRegistryUrl }}{{ .Values.mapproxy.image.repository }}:{{ .Values.mapproxy.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }} 
+          env:
+            - name: SOCKET_CONNECTION_TIMEOUT_SECONDS
+              value: {{ .Values.mapproxy.socket.connectionTimeoutSeconds | quote }}
+            - name: SOCKET_TIMEOUT_SECONDS
+              value: {{ .Values.mapproxy.socket.timeoutSeconds | quote }}
+            {{- if .Values.global.ca.secretName }}
+            - name: REQUESTS_CA_BUNDLE
+              value: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+            - name: NODE_EXTRA_CA_CERTS
+              value: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+            {{- end }}
+            {{- if eq (upper $storage.tilesStorageProvider) "S3" }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .s3SecretName }}
+                  key: secretAccessKey
+            {{- end }}
+            {{- if .Values.global.ca.enabled }}
+            - name: REQUESTS_CA_BUNDLE
+              value: '/usr/local/share/ca-certificates/ca.crt'
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name:  {{ $configmapName }}
+          {{- if .resources.enabled }}
+          resources:
+            {{- toYaml .resources.value | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - name: shared-config
+            mountPath: /uwsgi_config
+          - mountPath: /mapproxy/mapproxy.yaml
+            name: mapproxy-config
+            subPath: mapproxy.yaml
+          {{- if .Values.global.ca.secretName }}
+          - mountPath: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
+            name: root-ca
+            subPath: {{ quote .Values.global.ca.key }}
+          {{- end }}
+          {{- if .Values.authentication.ssl.enabled }}
+          - name: open-ssl
+            mountPath: "/etc/ssl/openssl.cnf"
+            subPath: "openssl.cnf"
+          {{- end }}
+          - mountPath: "/mapproxy/uwsgi.ini"
+            name: uwsgi-config
+            subPath: uwsgi.ini
+          - mountPath: "/mapproxy/log.ini"
+            name: uwsgi-config
+            subPath: log.ini
+          {{- if $fs.internalPvc.enabled}}
+          - mountPath: /layerSources
+            name: sources-storage
+            subPath: {{ $fs.internalPvc.tilesSubPath }}
+          {{- end }}
+          ports:
+            - name: uwsgi
+              containerPort: {{ .Values.mapproxy.uwsgi.socket }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /service?REQUEST=GetCapabilities&SERVICE=WMTS
+              port: {{ .Values.mapproxy.targetPort }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+{{- end }}

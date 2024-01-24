@@ -1,0 +1,36 @@
+{{- if and .Values.mapproxy.enabled .Values.mapproxy.wmts.enabled -}}
+
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "mapproxy.name" . -}}
+{{- $type := "wmts"}}
+{{- $replicaCount := .Values.mapproxy.wmts.replicaCount }}
+{{- $wmtsDeploymentName := include "wmts-deployment.fullname" . }}
+
+{{- if .Values.global.ca.enabled }}
+{{- if and .Values.global.ca.secretName (not .Values.global.ca.secretName) }}
+{{- fail "When using external ca secret the value for .Values.global.ca.secretName should be set" }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.authentication.ssl.enabled }}
+{{- if and .Values.authentication.ssl.useExternal (not .Values.authentication.ssl.externalSecretName) }}
+{{- fail "When using external ssl secret the value for .Values.authentication.ssl.externalSecretName should be set" }}
+{{- end }}
+{{- end }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $wmtsDeploymentName }}
+  annotations:
+    collectord.io/index: {{ quote .Values.splunkIndex }}
+    collectord.io/output: splunk
+  labels:
+    app: {{ $chartName }}
+    component: {{ $chartName }}
+    environment: {{ include "mapproxy.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "mapproxy.labels" . | nindent 4 }}
+spec:
+  {{- template "mapproxy-chart.mapproxy-bundle" (merge (dict "releaseName" $releaseName "chartName" $chartName "type" $type "replicaCount" $replicaCount "resources" .Values.mapproxy.wmts.resources) .)}}
+{{- end -}}
