@@ -5,8 +5,8 @@
 {{- $db := (include "common.db.merged" .) | fromYaml }}
 {{- $s3 := (include "common.s3.merged" .) | fromYaml }}
 {{- $storage := (include "common.storage.merged" .) | fromYaml }}
-{{- $metricsUrl := include "mapproxy.metricsUrl" . -}}
-{{- $tracingUrl := include "mapproxy.tracingUrl" . -}}
+{{- $metrics := (include "common.metrics.merged" .) | fromYaml }}
+{{- $tracing := (include "common.tracing.merged" .) | fromYaml }}
 
 apiVersion: v1
 kind: ConfigMap
@@ -22,13 +22,13 @@ data:
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.mapproxinator.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.mapproxinator.env.logLevel | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.mapproxinator.env.logPrettyPrintEnabled | quote }}
-  {{ if .Values.env.tracing.enabled }}
+  {{ if $tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'
-  TELEMETRY_TRACING_URL: {{ $tracingUrl }}
+  TELEMETRY_TRACING_URL: {{ $tracing.url }}
   {{ end }}
-  {{ if .Values.env.metrics.enabled }}
+  {{ if $metrics.enabled }}
   TELEMETRY_METRICS_ENABLED: 'true'
-  TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  TELEMETRY_METRICS_URL: {{ $metrics.url }}
   {{ end }}
   SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}
   CONFIG_PROVIDER: {{ $storage.mapproxyConfigProvider | quote }}

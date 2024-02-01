@@ -3,6 +3,7 @@
 {{- $releaseName := .Release.Name -}}
 {{- $configmapName := include "configmap.fullname" . -}}
 {{- $s3 := (include "common.s3.merged" .) | fromYaml }}
+{{- $tracing := (include "common.tracing.merged" .) | fromYaml }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -16,8 +17,9 @@ data:
   S3_ENDPOINT_URL: {{ $s3.endpointUrl }}
   S3_BUCKET:  {{ $s3.tilesBucket }}
   AWS_HTTPS: {{ $s3.sslEnabled | quote }}
-  TELEMETRY_TRACING_ENABLED: {{ .Values.global.tracing.enabled | quote }}
-  TELEMETRY_TRACING_ENDPOINT: {{ .Values.global.tracing.url | quote }}
+  TELEMETRY_TRACING_ENABLED: {{ $tracing.enabled | quote }}
+  TELEMETRY_TRACING_ENDPOINT: {{ $tracing.url | quote }}
+  TELEMETRY_SAMPLING_RATIO_DENOMINATOR: {{ $tracing.samplingRatioDenominator | quote }}
   CORS_ENABLED: {{ .Values.mapproxy.env.cors.enabled | quote }}
   CORS_ALLOWED_HEADERS: {{ template "map-proxy.cors.allowedHeaders" . }}
   CORS_ALLOWED_ORIGIN: {{ .Values.mapproxy.env.cors.allowedOrigin | quote }}

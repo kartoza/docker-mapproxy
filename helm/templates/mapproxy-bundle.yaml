@@ -8,6 +8,7 @@
   {{- $sslSecretName := ternary .Values.authentication.ssl.externalSecretName (printf "%s%s" .Release.Name "-open-ssl") .Values.authentication.ssl.useExternal }}
   {{- $postgresSecretName := ternary $db.secrets.externalSecretName (printf "%s%s" .Release.Name "-postgres-secret") $db.secrets.useExternal }}
   {{- $s3SecretName := ternary $s3.secretName (printf "%s%s" .Release.Name  "-s3-secret") (ne $s3.secretName "") }}
+  {{- $metrics := (include "common.metrics.merged" .) | fromYaml }}
   replicas: {{ .replicaCount }}
   selector:
     matchLabels:
@@ -29,9 +30,9 @@
         checksum/configmap: {{
           include (print $.Template.BasePath "/mapproxy/mapproxy-configmap.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.env.metrics.enabled }}
-        prometheus.io/port: {{ .Values.mapproxy.env.metrics.prometheus.port | quote }}
-        prometheus.io/scrape: {{ .Values.mapproxy.env.metrics.prometheus.scrape | quote }}
+        {{- if $metrics.enabled }}
+        prometheus.io/port: {{ $metrics.prometheus.port | quote }}
+        prometheus.io/scrape: {{ $metrics.prometheus.scrape | quote }}
         {{- end }}
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
@@ -50,7 +51,7 @@
         ######################################################### Mapproxinator Deployment #########################################################
         {{- template "mapproxy-chart.mapproxinator-container" (merge (dict "releaseName" .releaseName "chartName" .chartName "cloudProviderDockerRegistryUrl" $cloudProviderDockerRegistryUrl "s3SecretName" $s3SecretName "postgresSecretName" $postgresSecretName) .) }}
          ######################################################### uwsgi Deployment #########################################################
-        {{- if .Values.mapproxy.env.metrics.enabled }}
+        {{- if $metrics.enabled }}
         {{- template "mapproxy-chart.uwsgi-exporter-container" (merge (dict "releaseName" .releaseName "chartName" .chartName "cloudProviderDockerRegistryUrl" $cloudProviderDockerRegistryUrl "resources" .Values.uwsgiExporter.resources) .) }}
         {{- end }}
       volumes:

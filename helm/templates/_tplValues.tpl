@@ -60,3 +60,11 @@ Custom definitions
 {{- define "common.fs.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.storage.fs .Values.storage.fs ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.tracing.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.tracing .Values.tracing ) "context" . ) }}
+{{- end -}}
+
+{{- define "common.metrics.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.metrics .Values.metrics ) "context" . ) }}
+{{- end -}}

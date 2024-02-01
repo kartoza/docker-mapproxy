@@ -5,10 +5,14 @@ global:
     flavor: openshift
   tracing:
     enabled: false
-    url: http://localhost:55681/v1/trace
+    url: ""
+    samplingRatioDenominator: 1000
   metrics:
     enabled: false
-    url: http://localhost:55681/v1/metrics
+    url: ""
+    prometheus:
+      scrape: false
+      port: 9117
   environment: ""
   authentication:
     jwtPublicKeySecretName: map-colonies-jwks
@@ -72,6 +76,17 @@ db:
     useExternal: false
     externalSecretName: ""
 
+tracing:
+  enabled: false
+  url: ""
+  # samplingRatioDenominator: 1000
+metrics:
+    enabled: false
+    url: ""
+    prometheus:
+      scrape: false
+      port: 9117
+
 # add pod annotations
 # example:
 # podAnnotations:
@@ -89,15 +104,6 @@ cloudProvider:
   dockerRegistryUrl: my-registry-url.io
   imagePullSecretName: "my-registry-secret"
   flavor: openshift
-
-env:
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/trace
-    samplingRatioDenominator: 1000
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
 
 mapproxy:
   enabled: true
@@ -168,9 +174,9 @@ mapproxy:
     requestPayloadLimit: 1mb
     metrics:
       prometheus:
-        scrape: true
+        scrape: false
         port: 9117
-      enabled: true
+      enabled: false
 
 initContainer:
   image:
