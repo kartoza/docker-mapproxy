@@ -2,8 +2,8 @@ apiVersion: v2
 name: mapproxy
 description: A Helm chart for mapproxy service
 type: application
-version: 1.5.6
-appVersion: 1.5.6
+version: 1.5.7
+appVersion: 1.5.7
 dependencies:
   - name: nginx
     version: 1.1.0
