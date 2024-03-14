@@ -44,6 +44,7 @@ global:
     secretName: "root-ca"
     path: "/usr/local/share/ca-certificates"
     key: "ca.crt"
+  gracefulReloadMaxSeconds: 300
 
 authentication:
   ssl:
@@ -254,7 +255,7 @@ nginx:
   port: 8080
   internalServicePort: 80
   nginxTargetPort: &nginxTargetPort 8080
-  targetPort: *envoyPort  # --> if global.opalaEnabled is true use *nginxTargetPort else use *envoyPort | if no authorization is needed use *nginxTargetPort
+  targetPort: *envoyPort # --> if global.opalaEnabled is true use *nginxTargetPort else use *envoyPort | if no authorization is needed use *nginxTargetPort
   nodePort: 30003
 
   authorization:
@@ -406,7 +407,6 @@ mapproxinator:
     poll:
       timeout:
         frequencyMS: 5000
-    gracefulReloadMaxSeconds: 300
     logPrettyPrintEnabled: false
     responseCompressionEnabled: true
     requestPayloadLimit: 1mb
@@ -417,10 +417,6 @@ mapproxinator:
       CA_FILE_LOCATION: /opt/certs/ca/ca.pem
       KEY_FILE_LOCATION: /opt/certs/key/key.pem
       CERT_FILE_LOCATION: /opt/certs/cert/cert.pem
-    logPrettyPrintEnabled: false
-    gracefulReloadMaxSeconds: 300
-    responseCompressionEnabled: true
-    requestPayloadLimit: 1mb
   resources:
     enabled: false
     value:

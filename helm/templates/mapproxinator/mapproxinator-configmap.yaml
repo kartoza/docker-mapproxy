@@ -33,7 +33,7 @@ data:
   SERVER_PORT: {{ .Values.mapproxinator.targetPort | quote }}
   CONFIG_PROVIDER: {{ $storage.mapproxyConfigProvider | quote }}
   POLL_TIMEOUT_FREQUENCY_MS: {{ .Values.mapproxinator.env.poll.timeout.frequencyMS | quote }}
-  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.mapproxinator.env.gracefulReloadMaxSeconds | quote }}
+  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.global.gracefulReloadMaxSeconds | quote }}
   S3_ENDPOINT_URL: {{ $s3.endpointUrl }}
   S3_BUCKET: {{ $s3.tilesBucket }}
   S3_SSL_ENABLED: {{ $s3.sslEnabled | quote }}
@@ -46,6 +46,5 @@ data:
   DB_SSL_PATH_CA: {{ .Values.mapproxinator.env.ssl.CA_FILE_LOCATION }}
   DB_SSL_PATH_KEY: {{ .Values.mapproxinator.env.ssl.KEY_FILE_LOCATION }}
   DB_SSL_PATH_CERT: {{ .Values.mapproxinator.env.ssl.CERT_FILE_LOCATION }}
-  GRACEFUL_RELOAD_MAX_SECONDS: {{ .Values.mapproxinator.env.gracefulReloadMaxSeconds | quote }}
   PGAPPNAME: {{ $chartName }}
 {{- end }}
