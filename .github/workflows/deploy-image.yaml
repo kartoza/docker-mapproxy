@@ -17,9 +17,9 @@ jobs:
     strategy:
       matrix:
         mapproxy_version:
-          - '==1.16.0'
+          - '==3.1.3'
         imageVersion:
-          - image: 3.11.5
+          - image: 3.13.0
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
