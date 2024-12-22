@@ -1,4 +1,3 @@
-version: '3.9'
 volumes:
    mapproxy_cache_data:
 services:
