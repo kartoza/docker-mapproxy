@@ -5,8 +5,8 @@ on:
     workflows:
       - build-latest
     branches:
-      - develop
-      - action
+      - master
+      - main
     types:
       - completed
 jobs:
