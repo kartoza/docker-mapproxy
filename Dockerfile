@@ -27,8 +27,10 @@ RUN apt-get -y update && \
     gosu awscli; \
 # verify that the binary works
 	gosu nobody true
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy${MAPPROXY_VERSION} uwsgi pyproj boto3 s3cmd \
-    requests riak==2.4.2 redis numpy azure-storage-blob
+
+ADD build_data/requirements_template.txt /settings/requirements_template.txt
+RUN export MAPPROXY_VERSION=${MAPPROXY_VERSION} && envsubst < /settings/requirements_template.txt > /settings/requirements.txt
+RUN pip3 --disable-pip-version-check install -r /settings/requirements.txt
 
 
 # Cleanup resources
@@ -45,4 +47,3 @@ RUN chmod +x /scripts/*.sh
 RUN echo 'figlet -t "Kartoza Docker MapProxy"' >> ~/.bashrc
 
 ENTRYPOINT [ "/scripts/start.sh" ]
-#CMD [ "/scripts/run_develop_server.sh" ]
