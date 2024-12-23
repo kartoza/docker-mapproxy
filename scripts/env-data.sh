@@ -10,9 +10,10 @@ fi
 if [ -z "${THREADS}" ]; then
 	THREADS=10
 fi
-if [ -z "${PRODUCTION}" ]; then
-	PRODUCTION=true
+if [ -z "${PRESERVE_EXAMPLE_CONFIGS}" ]; then
+	PRESERVE_EXAMPLE_CONFIGS=false
 fi
+
 if [ -z "${MAPPROXY_APP_DIR}" ]; then
 	MAPPROXY_APP_DIR=/opt/mapproxy
 fi

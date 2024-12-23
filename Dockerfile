@@ -1,5 +1,5 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-ARG IMAGE_VERSION=3.11.5
+ARG IMAGE_VERSION=3.13.0
 FROM python:${IMAGE_VERSION}
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
@@ -9,24 +9,29 @@ ARG MAPPROXY_VERSION=''
 RUN apt-get -y update && \
     apt-get install -y \
     gettext \
-    python3-yaml \
     libgeos-dev \
-    python3-lxml \
     libgdal-dev \
     build-essential \
-    python3-dev \
     libjpeg-dev \
+    libgeos-dev \
     zlib1g-dev \
     libfreetype6-dev \
+    python3-dev \
+    python3-lxml \
+    python3-yaml \
     python3-virtualenv \
+    python3-pil \
+    python3-pyproj \
+    python3-shapely \
     figlet \
     gosu awscli; \
 # verify that the binary works
 	gosu nobody true
-RUN pip3 --disable-pip-version-check install Shapely Pillow MapProxy${MAPPROXY_VERSION} uwsgi pyproj boto3 s3cmd \
-    requests riak==2.4.2 redis numpy
 
-RUN ln -s /usr/lib/libgdal.a /usr/lib/liblibgdal.a
+ADD build_data/requirements_template.txt /settings/requirements_template.txt
+RUN export MAPPROXY_VERSION=${MAPPROXY_VERSION} && envsubst < /settings/requirements_template.txt > /settings/requirements.txt
+RUN pip3 --disable-pip-version-check install -r /settings/requirements.txt
+
 
 # Cleanup resources
 RUN apt-get -y --purge autoremove  \
@@ -42,4 +47,3 @@ RUN chmod +x /scripts/*.sh
 RUN echo 'figlet -t "Kartoza Docker MapProxy"' >> ~/.bashrc
 
 ENTRYPOINT [ "/scripts/start.sh" ]
-CMD [ "/scripts/run_develop_server.sh" ]

@@ -4,20 +4,37 @@ on:
   pull_request:
     branches:
       - main
-      - action
+      - master
+    paths:
+      - 'Dockerfile'
+      - 'scripts/**'
+      - 'build_data/**'
+      - '.github/workflows/**'
   push:
     branches:
-      - develop
+      - master
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'scripts/**'
+      - 'build_data/**'
+      - '.github/workflows/**'
 
 jobs:
   run-scenario-tests:
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      !(
+        contains(github.event.pull_request.title, '[skip-release]') ||
+        contains(github.event.comment.body, '/skiprelease')
+      )
     runs-on: ubuntu-latest
     strategy:
       matrix:
         mapproxy_version:
-          - '==1.16.0'
+          - '==3.1.3'
         imageVersion:
-          - image: 3.11.5
+          - image: 3.13.0
         scenario:
           - s3
           - proxy
@@ -58,15 +75,22 @@ jobs:
           bash ./test.sh
 
   push-internal-pr-images:
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.repo.url == github.event.pull_request.head.repo.url
+    if: |
+      github.event_name == 'pull_request' && 
+      github.event.pull_request.base.repo.url == github.event.pull_request.head.repo.url && 
+      github.actor != 'dependabot[bot]'  &&
+      !(
+        contains(github.event.pull_request.title, '[skip-release]') ||
+        contains(github.event.comment.body, '/skiprelease')
+      )
     runs-on: ubuntu-latest
     needs: [ run-scenario-tests ]
     strategy:
       matrix:
         mapproxy_version:
-          - '==1.16.0'
+          - '==3.1.3'
         imageVersion:
-          - image: 3.11.5
+          - image: 3.13.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
