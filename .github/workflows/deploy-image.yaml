@@ -11,6 +11,12 @@ on:
       - completed
 jobs:
   deploy-image:
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      !(
+        contains(github.event.pull_request.title, '[skip-release]') ||
+        contains(github.event.comment.body, '/skiprelease')
+      ) && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
       latest-ref: refs/heads/develop
@@ -35,21 +41,30 @@ jobs:
 
       - name: Get Current Date
         id: current_date
-        shell: python
-        run: |
-          import datetime
-          now = datetime.datetime.utcnow()
-          print(f'::set-output name=formatted::{now:%Y.%m.%d}')
+        run: echo "formatted=$(date -u +%Y.%m.%d)" >> $GITHUB_OUTPUT
 
-      - name: Replace '=='
-        id: replace_double_equals
+      - name: Format Version Name
+        id: format_version_name
         run: |
           mapproxy_version="${{ matrix.mapproxy_version }}"
           mapproxy_version="${mapproxy_version//==/}"
-          echo "::set-env name=formatted_mapproxy_version::$mapproxy_version"
+          echo "formatted_mapproxy_version=$mapproxy_version" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Check if image exists on Docker Hub
+        id: check_hub_image_exists
+        run: |
+          docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
+          TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.DOCKERHUB_PASSWORD }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+          check_image=$(curl --silent -f --head -lL https://hub.docker.com/v2/repositories/kartoza/mapproxy/tags/${{ steps.format_version_name.outputs.formatted_mapproxy_version }}/ | head -n 1 | cut -d ' ' -f2) >> $GITHUB_OUTPUT
+
       - name: Build prod image
+        if: |
+          github.actor != 'dependabot[bot]' &&
+          !(
+            contains(github.event.pull_request.title, '[skip-release]') ||
+            contains(github.event.comment.body, '/skiprelease')
+          ) && github.event.workflow_run.conclusion == 'success'
         id: docker_build_prod
         uses: docker/build-push-action@v4
         with:
@@ -59,11 +74,59 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_REPO }}/mapproxy
-            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ env.formatted_mapproxy_version }}
+            ${{ steps.check_hub_image_exists.outputs.check_image == 200 && format('{0}/mapproxy:{1}', secrets.DOCKERHUB_REPO,  steps.format_version_name.outputs.formatted_mapproxy_version) || null}}
+            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.format_version_name.outputs.formatted_mapproxy_version }}
+            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.format_version_name.outputs.formatted_mapproxy_version }}--v${{ steps.current_date.outputs.formatted }}
           build-args: |
             IMAGE_VERSION=${{ matrix.imageVersion.image }}
-            MAPPROXY_VERSION=${{ env.formatted_mapproxy_version }}
+            MAPPROXY_VERSION=${{ matrix.mapproxy_version }}
           cache-from: |
             type=gha,scope=test
             type=gha,scope=prod
           cache-to: type=gha,scope=prod
+
+  publish_release_artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      !(
+        contains(github.event.pull_request.title, '[skip-release]') ||
+        contains(github.event.comment.body, '/skiprelease') 
+      ) &&  github.event.workflow_run.conclusion == 'success'
+    needs: [ deploy-image ]
+    strategy:
+      matrix:
+        mapproxy_version:
+          - '==3.1.3'
+        imageVersion:
+          - image: 3.13.0
+    steps:
+      - name: Checkout code
+        id: git_checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'master'
+
+      - name: Get Current Date
+        id: current_date
+        run: echo "formatted=$(date -u +%Y.%m.%d)" >> $GITHUB_OUTPUT
+
+      - name: Format Version Name
+        id: format_version_name
+        run: |
+          mapproxy_version="${{ matrix.mapproxy_version }}"
+          mapproxy_version="${mapproxy_version//==/}"
+          echo "formatted_mapproxy_version=$mapproxy_version" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Get Latest Commit Hash
+        id: latest_commit_hash
+        run: echo "commit=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
+
+      - name: publish_release
+        id: tag_releases
+        run: |
+          gh release create v${{ steps.format_version_name.outputs.formatted_mapproxy_version }}--${{ steps.current_date.outputs.formatted }}--${{ steps.latest_commit_hash.outputs.commit }} --notes ${{ steps.latest_commit_hash.outputs.commit }} --target master --repo $GITHUB_REPOSITORY
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

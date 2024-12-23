@@ -50,7 +50,7 @@ function cleanup_files(){
     if [[ $proxy_count != 0 ]];then
       for X in ${PARAM}_*.${EXT}; do
         if [ "$X" != "${PARAM}_${HOSTNAME}.${EXT}" ]; then
-            rm "$X"
+            rm -rf "$X"
         fi
       done
     fi
