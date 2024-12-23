@@ -33,6 +33,7 @@ function entry_point_script {
     for f in /docker-entrypoint-mapproxy.d/*; do
       case "$f" in
             *.sh)     echo "$0: running $f"; . "$f" || true;;
+            *.py)     echo "$0: running Python script $f"; python3 "$f" || true;;
             *)        echo "$0: ignoring $f" ;;
         esac
         echo
@@ -50,6 +51,7 @@ function cleanup_files(){
     if [[ $proxy_count != 0 ]];then
       for X in ${PARAM}_*.${EXT}; do
         if [ "$X" != "${PARAM}_${HOSTNAME}.${EXT}" ]; then
+            echo "Removing $X"
             rm -rf "$X"
         fi
       done
