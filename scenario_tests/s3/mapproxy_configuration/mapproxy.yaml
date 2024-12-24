@@ -39,13 +39,13 @@ services:
       contact:
         person: Kartoza
         position: GIS Manager
-        organization:
-        address:
-        city:
-        postcode:
+        organization: Kartoza
+        address: Kartoza
+        city: Cape Town
+        postcode: 7700
         country: south Africa
-        phone:
-        email:
+        phone: '276426345'
+        email: info@kartoza.com
       access_constraints: Insert license and copyright information for this service.
       fees: "None"
   tms:
@@ -70,7 +70,6 @@ caches:
     grids: [osm_grid]
     meta_size: [5, 5]
     meta_buffer: 20
-    concurrent_tile_creators: 2
     cache:
       type: s3
       directory: /hillshade/
