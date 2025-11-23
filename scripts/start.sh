@@ -120,11 +120,20 @@ else
   base_config_generator "${CONFIG_DATA_PATH}"
 fi
 
-if [[ "${MAPPROXY_CACHE_DIR}" != '/cache_data' ]];then
-  if [[ ! -f "${CONFIG_DATA_PATH}"/.replace.lock ]];then
-    sed -i "s|/cache_data|${MAPPROXY_CACHE_DIR}|g" "${CONFIG_DATA_PATH}"/mapproxy.yaml
-    touch "${CONFIG_DATA_PATH}"/.replace.lock
-  fi
+DEFAULT_CACHE_DIR="/cache_data"
+CONFIG_FILE="${CONFIG_DATA_PATH}/mapproxy.yaml"
+LOCK_FILE="${CONFIG_DATA_PATH}/default_path.txt"
+
+
+LAST_CACHE_DIR=""
+if [[ -f "$LOCK_FILE" ]]; then
+  LAST_CACHE_DIR=$(cat "$LOCK_FILE")
+fi
+
+
+if [[ "${MAPPROXY_CACHE_DIR}" != "$DEFAULT_CACHE_DIR" ]] && [[ "${MAPPROXY_CACHE_DIR}" != "$LAST_CACHE_DIR" ]]; then
+  sed -i "s|${DEFAULT_CACHE_DIR}|${MAPPROXY_CACHE_DIR}|g" "$CONFIG_FILE"
+  echo "${MAPPROXY_CACHE_DIR}" > "$LOCK_FILE"
 fi
 pushd "${CONFIG_DATA_PATH}" || exit
 
