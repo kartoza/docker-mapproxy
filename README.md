@@ -50,8 +50,7 @@ git clone git://github.com/kartoza/docker-mapproxy
 docker build -t kartoza/mapproxy .
 ```
 
-**Note:** We do not use tagged versions as we install the latest
-version of mapproxy.
+
 
 To build a specific version
 
@@ -196,4 +195,4 @@ please consider taking out a [Support Level Agreement](https://kartoza.erpnext.c
 ## Credits
 Tim Sutton (tim@kartoza.com)
 Admire Nyakudya (admire@kartoza.com)
-September 2022
+November 2025
