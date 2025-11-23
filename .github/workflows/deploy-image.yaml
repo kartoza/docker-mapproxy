@@ -25,7 +25,7 @@ jobs:
         mapproxy_version:
           - '==6.0.1'
         imageVersion:
-          - image: 3.14.0
+          - image: 3.13.9
     steps:
       - uses: actions/checkout@v5
       - name: Set up QEMU
@@ -100,7 +100,7 @@ jobs:
         mapproxy_version:
           - '==6.0.1'
         imageVersion:
-          - image: 3.14.0
+          - image: 3.13.9
     steps:
       - name: Checkout code
         id: git_checkout

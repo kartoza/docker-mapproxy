@@ -1,5 +1,5 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-ARG IMAGE_VERSION=3.14.0
+ARG IMAGE_VERSION=3.13.9
 FROM python:${IMAGE_VERSION}
 MAINTAINER Tim Sutton<tim@kartoza.com>
 

@@ -34,7 +34,7 @@ jobs:
         mapproxy_version:
           - '==6.0.1'
         imageVersion:
-          - image: 3.14.0
+          - image: 3.13.9
         scenario:
           - s3
           - proxy
@@ -90,7 +90,7 @@ jobs:
         mapproxy_version:
           - '==6.0.1'
         imageVersion:
-          - image: 3.14.0
+          - image: 3.13.9
     steps:
       - name: Checkout code
         uses: actions/checkout@v5

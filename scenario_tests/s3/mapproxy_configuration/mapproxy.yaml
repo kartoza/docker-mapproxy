@@ -9,7 +9,6 @@
 # things can be configured.
 
 services:
-  demo:
   wms:
     # only offer WMS 1.1.1
     versions: ["1.1.1", "1.3.0"]
