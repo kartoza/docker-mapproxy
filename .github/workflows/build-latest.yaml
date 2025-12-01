@@ -2,18 +2,14 @@ name: build-latest
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main, master]
     paths:
       - 'Dockerfile'
       - 'scripts/**'
       - 'build_data/**'
       - '.github/workflows/**'
   push:
-    branches:
-      - master
-      - main
+    branches: [main, master]
     paths:
       - 'Dockerfile'
       - 'scripts/**'
@@ -21,14 +17,28 @@ on:
       - '.github/workflows/**'
 
 jobs:
-  run-scenario-tests:
-    if: |
-      github.event.workflow_run.actor != 'dependabot[bot]' &&
-      !(
-        contains(github.event.pull_request.title, '[skip-release]') ||
-        contains(github.event.comment.body, '/skiprelease')
-      )
+  determine_run:
     runs-on: ubuntu-latest
+    outputs:
+      skip_release: ${{ steps.skip_check.outputs.skip_release }}
+    steps:
+      - name: Determine skip-release
+        id: skip_check
+        run: |
+          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ "${{ github.event.pull_request.title }}" == *"[skip-release]"* ]]; then
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "skip_release=false" >> $GITHUB_OUTPUT
+  run-scenario-tests:
+    if: needs.determine_run.outputs.skip_release == 'false'
+    runs-on: ubuntu-latest
+    needs: [ determine_run ]
     strategy:
       matrix:
         mapproxy_version:
@@ -78,13 +88,9 @@ jobs:
     if: |
       github.event_name == 'pull_request' && 
       github.event.pull_request.base.repo.url == github.event.pull_request.head.repo.url && 
-      github.event.workflow_run.actor != 'dependabot[bot]'  &&
-      !(
-        contains(github.event.pull_request.title, '[skip-release]') ||
-        contains(github.event.comment.body, '/skiprelease')
-      )
+      needs.determine_run.outputs.skip_release == 'false'
     runs-on: ubuntu-latest
-    needs: [ run-scenario-tests ]
+    needs: [ run-scenario-tests, determine_run ]
     strategy:
       matrix:
         mapproxy_version:

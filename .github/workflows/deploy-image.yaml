@@ -10,13 +10,27 @@ on:
     types:
       - completed
 jobs:
+  determine_run:
+    runs-on: ubuntu-latest
+    outputs:
+      skip_release: ${{ steps.skip_check.outputs.skip_release }}
+    steps:
+      - name: Determine skip-release
+        id: skip_check
+        run: |
+          if [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ "${{ github.event.pull_request.title }}" == *"[skip-release]"* ]]; then
+            echo "skip_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "skip_release=false" >> $GITHUB_OUTPUT
   deploy-image:
-    if: |
-      github.event.workflow_run.actor != 'dependabot[bot]' &&
-      !(
-        contains(github.event.pull_request.title, '[skip-release]') ||
-        contains(github.event.comment.body, '/skiprelease')
-      ) && github.event.workflow_run.conclusion == 'success'
+    if: needs.determine_run.outputs.skip_release == 'false' && github.event.workflow_run.conclusion == 'success'
+    needs: [ determine_run ]
     runs-on: ubuntu-latest
     env:
       latest-ref: refs/heads/develop
@@ -88,13 +102,8 @@ jobs:
   publish_release_artifacts:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: |
-      github.event.workflow_run.actor != 'dependabot[bot]' &&
-      !(
-        contains(github.event.pull_request.title, '[skip-release]') ||
-        contains(github.event.comment.body, '/skiprelease') 
-      ) &&  github.event.workflow_run.conclusion == 'success'
-    needs: [ deploy-image ]
+    if: needs.determine_run.outputs.skip_release == 'false'
+    needs: [ determine_run, deploy-image ]
     strategy:
       matrix:
         mapproxy_version:
