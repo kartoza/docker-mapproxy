@@ -9,3 +9,5 @@ minio_data/**
 !minio_data/.gitkeep
 .idea*
 web/index.html
+scenario_tests/s3/tests/__pycache__*
+*.DS_Store*

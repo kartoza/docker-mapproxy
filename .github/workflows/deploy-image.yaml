@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-image:
     if: |
-      github.actor != 'dependabot[bot]' &&
+      github.event.workflow_run.actor != 'dependabot[bot]' &&
       !(
         contains(github.event.pull_request.title, '[skip-release]') ||
         contains(github.event.comment.body, '/skiprelease')
@@ -60,7 +60,7 @@ jobs:
 
       - name: Build prod image
         if: |
-          github.actor != 'dependabot[bot]' &&
+          github.event.workflow_run.actor != 'dependabot[bot]' &&
           !(
             contains(github.event.pull_request.title, '[skip-release]') ||
             contains(github.event.comment.body, '/skiprelease')
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: |
-      github.actor != 'dependabot[bot]' &&
+      github.event.workflow_run.actor != 'dependabot[bot]' &&
       !(
         contains(github.event.pull_request.title, '[skip-release]') ||
         contains(github.event.comment.body, '/skiprelease') 
