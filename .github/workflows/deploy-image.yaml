@@ -73,12 +73,7 @@ jobs:
           check_image=$(curl --silent -f --head -lL https://hub.docker.com/v2/repositories/kartoza/mapproxy/tags/${{ steps.format_version_name.outputs.formatted_mapproxy_version }}/ | head -n 1 | cut -d ' ' -f2) >> $GITHUB_OUTPUT
 
       - name: Build prod image
-        if: |
-          github.event.workflow_run.actor != 'dependabot[bot]' &&
-          !(
-            contains(github.event.pull_request.title, '[skip-release]') ||
-            contains(github.event.comment.body, '/skiprelease')
-          ) && github.event.workflow_run.conclusion == 'success'
+        if: needs.determine_run.outputs.skip_release == 'false' && github.event.workflow_run.conclusion == 'success'
         id: docker_build_prod
         uses: docker/build-push-action@v6
         with:
