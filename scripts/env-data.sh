@@ -23,8 +23,17 @@ fi
 if [ -z "${MAPPROXY_CACHE_DIR}" ]; then
         MAPPROXY_CACHE_DIR=/cache_data
 fi
+if [ -z "${MULTI_MAPPROXY_BASE_CACHE_DIR}" ]; then
+        MULTI_MAPPROXY_BASE_CACHE_DIR="${MAPPROXY_CACHE_DIR}"
+fi
 if [ -z "${MULTI_MAPPROXY}" ]; then
 	MULTI_MAPPROXY=false
+fi
+if [ -z "${MULTI_MAPPROXY_DIRECTORY_LAYOUT}" ]; then
+	MULTI_MAPPROXY_DIRECTORY_LAYOUT=false
+fi
+if [ -z "${OVERWRITE_GLOBAL_CACHE}" ]; then
+	OVERWRITE_GLOBAL_CACHE=false
 fi
 if [ -z "${ALLOW_LISTING}" ]; then
 	ALLOW_LISTING=True

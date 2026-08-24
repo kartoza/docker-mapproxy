@@ -20,21 +20,16 @@ services:
       - MAPPROXY_USER_ID=1000
       - MAPPROXY_GROUP_ID=1000
       - MULTI_MAPPROXY=true
+      - MULTI_MAPPROXY_BASE_CACHE_DIR=/cache_dir
       - ALLOW_LISTING=True
       - LOGGING=true
-      - config_path=demo,mapproxy
-      - TEST_CLASS=test_request.TestMapProxyTile
     volumes:
       - ./mapproxy_configuration:/multi_mapproxy
-      - ./tests:/tests
+      - ./cache_dir:/cache_dir
     depends_on:
       - map
     ports:
       - "8080"
-
-
-
-
 
 
 

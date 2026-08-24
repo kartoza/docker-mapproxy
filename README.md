@@ -74,6 +74,8 @@ The image specifies a couple of environment variables
 the env `PROCESSES`
 * `THREADS`=maximum number of parallel threads to run production instance with.
 * `MULTI_MAPPROXY`=Boolean value to indicate if you need to run multi mapproxy. Defaults to false
+* `MULTI_MAPPROXY_DIRECTORY_LAYOUT`=Use one directory per multi-map instance. Defaults to false, which uses MapProxy's standard flat YAML layout
+* `OVERWRITE_GLOBAL_CACHE`=Allow multi mode to replace an existing `globals.cache.base_dir` with the path calculated from `MULTI_MAPPROXY_BASE_CACHE_DIR`. Defaults to false
 * `ALLOW_LISTING`=Allows listing all config files in multi map mode
 * `LOGGING`=Boolean value to indicate if you need to activate logging. Useful
 when using uwsgi (not in multi-app mode)
@@ -123,9 +125,28 @@ docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/mapproxy:/mapproxy kart
 In multi mode app
 
 ```bash
-mkdir multi_mapproxy
-docker run --name "mapproxy" -p 8080:8080 -d -t -v `pwd`/multi_mapproxy:/multi_mapproxy kartoza/mapproxy
+mkdir -p multi_mapproxy cache_data
+docker run --name "mapproxy" -p 8080:8080 -d -t \
+  -e MULTI_MAPPROXY=true \
+  -e MULTI_MAPPROXY_BASE_CACHE_DIR=/cache_data \
+  -v `pwd`/multi_mapproxy:/multi_mapproxy \
+  -v `pwd`/cache_data:/cache_data \
+  kartoza/mapproxy
 ```
+
+By default, multi mode follows MapProxy's standard layout: each top-level YAML
+file is an application. The YAML filename stem is sanitized and used as its
+cache subdirectory. For example, `demo.yaml` receives
+`globals.cache.base_dir: /cache_data/demo`.
+
+An existing `globals.cache.base_dir` is preserved by default. Set
+`OVERWRITE_GLOBAL_CACHE=true` to replace it with the per-application path under
+`MULTI_MAPPROXY_BASE_CACHE_DIR`.
+
+Set `MULTI_MAPPROXY_DIRECTORY_LAYOUT=true` to opt into a directory-per-instance
+layout. Each immediate directory should contain `mapproxy.yaml`, a YAML file
+matching the directory name, or one other non-seed YAML file. In this mode the
+directory name is used for both the application URL and cache subdirectory.
 
 The first time your run the container, mapproxy basic default configuration
 files will be written into `/mapproxy` or `multi_mapproxy` volumes. You should read the mapproxy documentation
