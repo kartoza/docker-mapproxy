@@ -12,9 +12,23 @@ on:
 jobs:
   determine_run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pythonMajorVersion:
+          - 3
+        pythonMinorVersion:
+          - 13
     outputs:
       skip_release: ${{ steps.skip_check.outputs.skip_release }}
+      python_major_version: ${{ steps.python_version.outputs.major }}
+      python_minor_version: ${{ steps.python_version.outputs.minor }}
     steps:
+      - name: Resolve configured Python version
+        id: python_version
+        run: |
+          echo "major=${{ matrix.pythonMajorVersion }}" >> "$GITHUB_OUTPUT"
+          echo "minor=${{ matrix.pythonMinorVersion }}" >> "$GITHUB_OUTPUT"
+
       - name: Determine skip-release
         id: skip_check
         run: |
@@ -28,18 +42,33 @@ jobs:
             exit 0
           fi
           echo "skip_release=false" >> $GITHUB_OUTPUT
-  deploy-image:
-    if: needs.determine_run.outputs.skip_release == 'false' && github.event.workflow_run.conclusion == 'success'
+
+  resolve-versions:
+    if: needs.determine_run.outputs.skip_release == 'false'
     needs: [ determine_run ]
     runs-on: ubuntu-latest
+    outputs:
+      python_version: ${{ steps.versions.outputs.python_version }}
+      python_image_sha: ${{ steps.versions.outputs.python_image_sha }}
+      mapproxy_version: ${{ steps.versions.outputs.mapproxy_version }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Resolve latest build versions
+        id: versions
+        env:
+          PYTHON_MAJOR_VERSION: ${{ needs.determine_run.outputs.python_major_version }}
+          PYTHON_MINOR_VERSION: ${{ needs.determine_run.outputs.python_minor_version }}
+        run: bash .github/scripts/resolve-build-versions.sh
+
+  deploy-image:
+    if: needs.determine_run.outputs.skip_release == 'false' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    needs: [ determine_run, resolve-versions ]
+    runs-on: ubuntu-latest
+    outputs:
+      installed_mapproxy_version: ${{ steps.installed_versions.outputs.mapproxy_version }}
     env:
       latest-ref: refs/heads/develop
-    strategy:
-      matrix:
-        mapproxy_version:
-          - '==6.0.1'
-        imageVersion:
-          - image: 3.13.9
     steps:
       - uses: actions/checkout@v7
       - name: Set up QEMU
@@ -57,38 +86,58 @@ jobs:
         id: current_date
         run: echo "formatted=$(date -u +%Y.%m.%d)" >> $GITHUB_OUTPUT
 
-      - name: Format Version Name
-        id: format_version_name
-        run: |
-          mapproxy_version="${{ matrix.mapproxy_version }}"
-          mapproxy_version="${mapproxy_version//==/}"
-          echo "formatted_mapproxy_version=$mapproxy_version" >> $GITHUB_OUTPUT
+      - name: Build image to resolve installed versions
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          pull: true
+          push: false
+          load: true
+          tags: kartoza/mapproxy:build-metadata
+          build-args: |
+            IMAGE_VERSION=${{ needs.resolve-versions.outputs.python_version }}
+            PYTHON_IMAGE_SHA=${{ needs.resolve-versions.outputs.python_image_sha }}
+            MAPPROXY_VERSION===${{ needs.resolve-versions.outputs.mapproxy_version }}
+          cache-from: type=gha,scope=prod
+
+      - name: Read installed MapProxy version
+        id: installed_versions
         shell: bash
+        run: |
+          mapproxy_version=$(docker run --rm --entrypoint sh \
+            kartoza/mapproxy:build-metadata -c \
+            '. /etc/kartoza/build_info.env && printf "%s" "$MAPPROXY_VERSION"')
+          echo "Installed MapProxy: ${mapproxy_version}"
+          echo "mapproxy_version=${mapproxy_version}" >> "$GITHUB_OUTPUT"
 
       - name: Check if image exists on Docker Hub
         id: check_hub_image_exists
         run: |
           docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
           TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.DOCKERHUB_PASSWORD }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-          check_image=$(curl --silent -f --head -lL https://hub.docker.com/v2/repositories/kartoza/mapproxy/tags/${{ steps.format_version_name.outputs.formatted_mapproxy_version }}/ | head -n 1 | cut -d ' ' -f2) >> $GITHUB_OUTPUT
+          check_image=$(curl --silent -f --head -lL https://hub.docker.com/v2/repositories/kartoza/mapproxy/tags/${{ steps.installed_versions.outputs.mapproxy_version }}/ | head -n 1 | cut -d ' ' -f2)
+          echo "check_image=${check_image}" >> "$GITHUB_OUTPUT"
 
       - name: Build prod image
-        if: needs.determine_run.outputs.skip_release == 'false' && github.event.workflow_run.conclusion == 'success'
+        if: needs.determine_run.outputs.skip_release == 'false' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
         id: docker_build_prod
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           file: Dockerfile
+          pull: true
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_REPO }}/mapproxy
-            ${{ steps.check_hub_image_exists.outputs.check_image == 200 && format('{0}/mapproxy:{1}', secrets.DOCKERHUB_REPO,  steps.format_version_name.outputs.formatted_mapproxy_version) || null}}
-            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.format_version_name.outputs.formatted_mapproxy_version }}
-            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.format_version_name.outputs.formatted_mapproxy_version }}--v${{ steps.current_date.outputs.formatted }}
+            ${{ steps.check_hub_image_exists.outputs.check_image == 200 && format('{0}/mapproxy:{1}', secrets.DOCKERHUB_REPO, steps.installed_versions.outputs.mapproxy_version) || null}}
+            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.installed_versions.outputs.mapproxy_version }}
+            ${{ secrets.DOCKERHUB_REPO }}/mapproxy:${{ steps.installed_versions.outputs.mapproxy_version }}--v${{ steps.current_date.outputs.formatted }}
           build-args: |
-            IMAGE_VERSION=${{ matrix.imageVersion.image }}
-            MAPPROXY_VERSION=${{ matrix.mapproxy_version }}
+            IMAGE_VERSION=${{ needs.resolve-versions.outputs.python_version }}
+            PYTHON_IMAGE_SHA=${{ needs.resolve-versions.outputs.python_image_sha }}
+            MAPPROXY_VERSION===${{ needs.resolve-versions.outputs.mapproxy_version }}
           cache-from: |
             type=gha,scope=test
             type=gha,scope=prod
@@ -99,12 +148,6 @@ jobs:
     timeout-minutes: 5
     if: needs.determine_run.outputs.skip_release == 'false'
     needs: [ determine_run, deploy-image ]
-    strategy:
-      matrix:
-        mapproxy_version:
-          - '==6.0.1'
-        imageVersion:
-          - image: 3.13.9
     steps:
       - name: Checkout code
         id: git_checkout
@@ -116,21 +159,17 @@ jobs:
         id: current_date
         run: echo "formatted=$(date -u +%Y.%m.%d)" >> $GITHUB_OUTPUT
 
-      - name: Format Version Name
-        id: format_version_name
-        run: |
-          mapproxy_version="${{ matrix.mapproxy_version }}"
-          mapproxy_version="${mapproxy_version//==/}"
-          echo "formatted_mapproxy_version=$mapproxy_version" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Get Latest Commit Hash
         id: latest_commit_hash
         run: echo "commit=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
 
       - name: publish_release
+        if: |
+          github.actor != 'dependabot[bot]' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event != 'workflow_dispatch'
         id: tag_releases
         run: |
-          gh release create v${{ steps.format_version_name.outputs.formatted_mapproxy_version }}--${{ steps.current_date.outputs.formatted }}--${{ steps.latest_commit_hash.outputs.commit }} --notes ${{ steps.latest_commit_hash.outputs.commit }} --target master --repo $GITHUB_REPOSITORY
+          gh release create v${{ needs.deploy-image.outputs.installed_mapproxy_version }}--${{ steps.current_date.outputs.formatted }}--${{ steps.latest_commit_hash.outputs.commit }} --notes ${{ steps.latest_commit_hash.outputs.commit }} --target master --repo $GITHUB_REPOSITORY
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

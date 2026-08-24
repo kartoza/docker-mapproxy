@@ -1,10 +1,15 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
 ARG IMAGE_VERSION=3.13.9
+
+
 FROM python:${IMAGE_VERSION}
 MAINTAINER Tim Sutton<tim@kartoza.com>
 
 #-------------Application Specific Stuff ----------------------------------------------------
+ARG IMAGE_VERSION
+ARG PYTHON_IMAGE_SHA=''
 ARG MAPPROXY_VERSION=''
+
 
 RUN apt-get -y update && \
     apt-get install -y \
@@ -31,6 +36,14 @@ RUN apt-get -y update && \
 ADD build_data/requirements_template.txt /settings/requirements_template.txt
 RUN export MAPPROXY_VERSION=${MAPPROXY_VERSION} && envsubst < /settings/requirements_template.txt > /settings/requirements.txt
 RUN pip3 --disable-pip-version-check install -r /settings/requirements.txt
+
+RUN MAPPROXY_INSTALLED_VERSION="$(python3 -c 'from importlib.metadata import version; print(version("MapProxy"))')" && \
+    mkdir -p /etc/kartoza && \
+    printf '%s\n' \
+      "PYTHON_VERSION=${IMAGE_VERSION}" \
+      "PYTHON_DIGEST_SHA=${PYTHON_IMAGE_SHA}" \
+      "MAPPROXY_VERSION=${MAPPROXY_INSTALLED_VERSION}" \
+      > /etc/kartoza/build_info.env
 
 
 # Cleanup resources

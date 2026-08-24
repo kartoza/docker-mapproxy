@@ -50,6 +50,15 @@ git clone git://github.com/kartoza/docker-mapproxy
 docker build -t kartoza/mapproxy .
 ```
 
+Local builds can select an exact Python version with `IMAGE_VERSION`:
+
+```bash
+docker build --build-arg IMAGE_VERSION=3.13.9 -t kartoza/mapproxy .
+```
+
+CI configures only the supported Python major and minor series and resolves the
+highest stable patch release in that series automatically.
+
 
 
 To build a specific version

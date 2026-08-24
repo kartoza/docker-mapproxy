@@ -1,0 +1,148 @@
+name: weekly-image-updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  update-mapproxy-image-weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Read published image metadata
+        id: published_image
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          docker pull kartoza/mapproxy:latest
+          CONTAINER_ID=$(docker create kartoza/mapproxy:latest)
+          
+          docker cp "${CONTAINER_ID}:/etc/kartoza/build_info.env" ./build_info.env
+          
+          docker rm "${CONTAINER_ID}"
+          
+          VERSION_INFO=$(cat ./build_info.env)
+          
+          echo "$VERSION_INFO"
+          
+          PYTHON_VERSION=$(echo "$VERSION_INFO" | grep '^PYTHON_VERSION=' | cut -d= -f2)
+          PYTHON_DIGEST_SHA=$(echo "$VERSION_INFO" | grep '^PYTHON_DIGEST_SHA=' | cut -d= -f2)
+          MAPPROXY_VERSION=$(echo "$VERSION_INFO" | grep '^MAPPROXY_VERSION=' | cut -d= -f2)
+          
+          echo "PYTHON_VERSION=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
+          echo "PYTHON_DIGEST_SHA=$PYTHON_DIGEST_SHA" >> "$GITHUB_OUTPUT"
+          echo "MAPPROXY_VERSION=$MAPPROXY_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: DockerHub Python Version
+        id: python_dockerhub_version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          published_python="${{ steps.published_image.outputs.PYTHON_VERSION }}"
+          python_series=${published_python%.*}
+          latest_python=$(curl --fail --silent --show-error \
+            "https://hub.docker.com/v2/repositories/library/python/tags?page_size=100&name=${python_series}." |
+            jq -r '.results[].name' |
+            grep -E "^${python_series//./\\.}\\.[0-9]+$" |
+            sort -V |
+            tail -n 1)
+
+          echo "${latest_python}"
+          echo "hub_python_version=${latest_python}" >> "$GITHUB_OUTPUT"
+
+      - name: DockerHub Python Digest
+        id: python_digest_comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DOCKERHUB_PYTHON="${{ steps.python_dockerhub_version.outputs.hub_python_version }}"
+          docker pull "python:${DOCKERHUB_PYTHON}"
+          PYTHON_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            "python:${DOCKERHUB_PYTHON}")
+          PYTHON_DIGEST=${PYTHON_DIGEST#*@}
+          echo "${PYTHON_DIGEST}"
+          echo "python_sha=${PYTHON_DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Check latest Mapproxy version
+        id: latest_mapproxy_version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          latest_mapproxy=$(curl --fail --silent --show-error \
+            https://pypi.org/pypi/MapProxy/json | jq -r '.info.version')
+          echo "${latest_mapproxy}"
+          echo "mapproxy_version=${latest_mapproxy}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine if rebuild is needed
+        id: rebuild_check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          NEEDS_BUILD=false
+
+          LATEST_PYTHON="${{ steps.python_dockerhub_version.outputs.hub_python_version }}"
+          PUBLISHED_PYTHON="${{ steps.published_image.outputs.PYTHON_VERSION }}"
+          LATEST_PYTHON_DIGEST="${{ steps.python_digest_comparison.outputs.python_sha }}"
+          PUBLISHED_PYTHON_DIGEST="${{ steps.published_image.outputs.PYTHON_DIGEST_SHA }}"
+          LATEST_MAPPROXY="${{ steps.latest_mapproxy_version.outputs.mapproxy_version }}"
+          PUBLISHED_MAPPROXY="${{ steps.published_image.outputs.MAPPROXY_VERSION }}"
+
+          echo "Published Python:         $PUBLISHED_PYTHON"
+          echo "Latest Python:            $LATEST_PYTHON"
+          echo "Published Python digest:  $PUBLISHED_PYTHON_DIGEST"
+          echo "Latest Python digest:     $LATEST_PYTHON_DIGEST"
+          echo "Published MapProxy:       $PUBLISHED_MAPPROXY"
+          echo "Latest MapProxy:          $LATEST_MAPPROXY"
+
+          if [ "$PUBLISHED_PYTHON" != "$LATEST_PYTHON" ]; then
+            echo "Python version changed"
+            NEEDS_BUILD=true
+          fi
+
+          if [ "$PUBLISHED_PYTHON_DIGEST" != "$LATEST_PYTHON_DIGEST" ]; then
+            echo "Python image digest changed"
+            NEEDS_BUILD=true
+          fi
+
+          if [ "$PUBLISHED_MAPPROXY" != "$LATEST_MAPPROXY" ]; then
+            echo "MapProxy version changed"
+            NEEDS_BUILD=true
+          fi
+
+          echo "needs_build=$NEEDS_BUILD" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger build-latest workflow
+        if: steps.rebuild_check.outputs.needs_build == 'true'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build-latest.yaml',
+              ref: 'develop'
+            })
