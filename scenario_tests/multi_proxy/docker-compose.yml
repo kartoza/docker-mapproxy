@@ -17,7 +17,7 @@ services:
       - PROCESSES=4
       - CHEAPER=2
       - THREADS=10
-      - MAPPROXY_USER_ID=1000
+      - MAPPROXY_USER_ID=${MAPPROXY_USER_ID:-1000}
       - MAPPROXY_GROUP_ID=1000
       - MULTI_MAPPROXY=true
       - MULTI_MAPPROXY_BASE_CACHE_DIR=/cache_dir
@@ -30,7 +30,5 @@ services:
       - map
     ports:
       - "8080"
-
-
 
 
