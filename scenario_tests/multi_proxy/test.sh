@@ -5,6 +5,11 @@ set -e
 
 source ../test-env.sh
 
+# Keep bind-mounted test artifacts owned by the host runner so cleanup works
+# both locally (commonly UID 1000) and on GitHub-hosted runners. Keep the
+# container GID at 1000 because runner GIDs can collide with system groups.
+export MAPPROXY_USER_ID=${MAPPROXY_USER_ID:-$(id -u)}
+
 # Run service
 if command -v docker-compose >/dev/null 2>&1; then
     COMPOSE=(docker-compose)
