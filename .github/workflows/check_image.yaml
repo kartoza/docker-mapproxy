@@ -144,5 +144,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'build-latest.yaml',
-              ref: 'develop'
+              ref: 'master'
             })

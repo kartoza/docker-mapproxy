@@ -56,11 +56,6 @@ Local builds can select an exact Python version with `IMAGE_VERSION`:
 docker build --build-arg IMAGE_VERSION=3.13.9 -t kartoza/mapproxy .
 ```
 
-CI configures only the supported Python major and minor series and resolves the
-highest stable patch release in that series automatically. It also resolves the
-Python image repository digest and latest MapProxy release before building.
-The CI series currently remains on Python 3.13 because multi-worker
-`mapproxy-seed` has a known failure under Python 3.14.
 
 Every built image records the resolved build information in
 `/etc/kartoza/build_info.env`:
