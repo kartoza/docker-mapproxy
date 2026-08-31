@@ -25,9 +25,23 @@ function directory_compose() {
   "${COMPOSE[@]}" -f docker-compose.yml -f docker-compose.directory-layout.yml "$@"
 }
 
+function clear_container_cache() {
+  local layout="$1"
+
+  if [[ ${layout} == directory ]]; then
+    directory_compose exec -T --user root mapproxy \
+      find /cache_dir -mindepth 1 ! -name .gitkeep -delete >/dev/null 2>&1 || true
+  else
+    compose exec -T --user root mapproxy \
+      find /cache_dir -mindepth 1 ! -name .gitkeep -delete >/dev/null 2>&1 || true
+  fi
+}
+
 function cleanup() {
   local exit_code=$?
   trap - EXIT
+  clear_container_cache directory
+  clear_container_cache flat
   directory_compose down -v >/dev/null 2>&1 || true
   compose down -v >/dev/null 2>&1 || true
   find cache_dir -mindepth 1 ! -name '.gitkeep' -delete
@@ -79,6 +93,7 @@ seed_config flat /multi_mapproxy/demo.yaml /multi_mapproxy/seed.yaml demo
 compose exec -T mapproxy test -f /cache_dir/mapproxy_configuration/world.mbtiles
 compose exec -T mapproxy test -f /cache_dir/demo/world_demo.mbtiles
 
+clear_container_cache flat
 compose down -v
 
 echo "Test opt-in directory multi-app layout"
