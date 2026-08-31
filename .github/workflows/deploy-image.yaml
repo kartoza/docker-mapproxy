@@ -11,6 +11,10 @@ on:
       - completed
 jobs:
   determine_run:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -62,7 +66,7 @@ jobs:
         run: bash .github/scripts/resolve-build-versions.sh
 
   deploy-image:
-    if: needs.determine_run.outputs.skip_release == 'false' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    if: needs.determine_run.outputs.skip_release == 'false'
     needs: [ determine_run, resolve-versions ]
     runs-on: ubuntu-latest
     outputs:
@@ -120,7 +124,6 @@ jobs:
           echo "check_image=${check_image}" >> "$GITHUB_OUTPUT"
 
       - name: Build prod image
-        if: needs.determine_run.outputs.skip_release == 'false' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
         id: docker_build_prod
         uses: docker/build-push-action@v7
         with:
